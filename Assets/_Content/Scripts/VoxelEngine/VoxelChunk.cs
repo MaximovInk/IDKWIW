@@ -329,6 +329,7 @@ namespace MaximovInk.VoxelEngine
                     //var triangles = new List<Triangle>();
 
                     var vertices = new Dictionary<float3, int>();
+                    var normals = new List<float3>();
 
                     var unstagedVertices = new List<Vertex>();
                     var triangles = new List<int>();
@@ -371,7 +372,7 @@ namespace MaximovInk.VoxelEngine
 
                             if (!a.Equals(b) && !a.Equals(c) && !b.Equals(c))
                             {
-                                //float3 normal = math.normalize(math.cross(b - a, c - a));
+                                float3 normal = math.normalize(math.cross(b - a, c - a));
 
                                 if (smoothing)
                                 {
@@ -383,6 +384,7 @@ namespace MaximovInk.VoxelEngine
                                     {
                                         var idx = vertices.Count;
                                         vertices.Add(c, idx);
+                                        normals.Add(normal);
 
                                         triangles.Add(idx);
                                     }
@@ -395,6 +397,7 @@ namespace MaximovInk.VoxelEngine
                                     {
                                         var idx = vertices.Count;
                                         vertices.Add(a, idx);
+                                        normals.Add(normal);
 
                                         triangles.Add(idx);
                                     }
@@ -407,6 +410,7 @@ namespace MaximovInk.VoxelEngine
                                     {
                                         var idx = vertices.Count;
                                         vertices.Add(b, idx);
+                                        normals.Add(normal);
 
                                         triangles.Add(idx);
                                     }
@@ -421,6 +425,10 @@ namespace MaximovInk.VoxelEngine
                                     unstagedVertices.Add(new Vertex() { Position = a, Color = Color.white, UV = Vector2.one });
                                     unstagedVertices.Add(new Vertex() { Position = b, Color = Color.white, UV = Vector2.one });
                                     unstagedVertices.Add(new Vertex() { Position = c, Color = Color.white, UV = Vector2.one });
+
+                                    normals.Add(normal);
+                                    normals.Add(normal);
+                                    normals.Add(normal);
                                 }
                             }
                         }
@@ -434,7 +442,8 @@ namespace MaximovInk.VoxelEngine
                     {
                         _meshData.Vertices = unstagedVertices.Select(n => n.Position).ToList();
                     }
-                   
+
+                    _meshData.Normals = normals.Select(n => new Vector3(n.x, n.y, n.z)).ToList();
                     _meshData.Triangles = triangles;
                 }
 
