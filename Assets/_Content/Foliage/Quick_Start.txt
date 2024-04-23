@@ -1,0 +1,7 @@
+Shaders path:
+
+Leaf:
+Tree Pack/URP/Leaf/Leaf
+
+Trunk:
+Tree Pack/URP/Bark/Bark
