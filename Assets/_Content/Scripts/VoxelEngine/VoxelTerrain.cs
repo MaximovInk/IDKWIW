@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.UIElements;
-using static Unity.Collections.AllocatorManager;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -14,7 +10,8 @@ namespace MaximovInk.VoxelEngine
         public int3 ChunkSize;
         public float3 BlockSize;
 
-        public float IsoLevel = 0.5f;
+        [Range(0,255)]
+        public byte IsoLevel = 2;
 
         private readonly Dictionary<int3, VoxelChunk> _chunksCache = new();
 
@@ -109,24 +106,18 @@ namespace MaximovInk.VoxelEngine
 
         #region Data
 
-        public void SetBlock(string blockID, int3 position)
+        public bool SetBlock(string blockID, int3 position)
         {
             var chunk = GetOrCreateChunk(position);
 
             if (string.IsNullOrEmpty(blockID))
             {
-                chunk.SetBlock(0, PositionToChunk(position));
-
-                return;
+                return chunk.SetBlock(0, PositionToChunk(position));
             }
 
             var index = VoxelDatabase.GetID(blockID);
 
-            if (chunk.SetBlock((ushort)(index), PositionToChunk(position)))
-            {
-                //UpdateBitmask(position);
-                //UpdateNeighborsBitmask(position);
-            }
+            return chunk.SetBlock((ushort)(index), PositionToChunk(position));
         }
 
         public ushort GetBlock(int3 position)
@@ -136,100 +127,12 @@ namespace MaximovInk.VoxelEngine
             return chunk.GetBlock( PositionToChunk(position));
         }
 
-        public void SetValue(float value, int3 position)
+        public void SetValue(byte value, int3 position)
         {
             var chunk = GetOrCreateChunk(position);
 
             chunk.SetValue( PositionToChunk(position), value);
         }
-
-        #endregion
-
-        #region Bitmask
-
-        public void SetBitmask(int3 position, byte bitmask)
-        {
-            var chunk = GetOrCreateChunk(position);
-
-            if (chunk == null)
-                return;
-
-            var coords = PositionToChunk(position);
-
-            if (chunk.GetBitmask(coords) != bitmask)
-                chunk.SetBitmask(coords, bitmask);
-        }
-
-        public void UpdateNeighborsBitmask(int3 position)
-        {
-            int x = position.x;
-            int y = position.y;
-            int z = position.z;
-
-            for (int ix = x - 1; ix < x + 2; ix++)
-            {
-                for (int iy = y - 1; iy < y + 2; iy++)
-                {
-                    for (int iz = z - 1; iz < z + 2; iz++)
-                    {
-                        if (ix == x && iy == y && iz == z)
-                            continue;
-
-                        UpdateBitmask(new int3(ix,iy,iz));
-                    }
-                }
-            }
-        }
-
-        public byte GetBitmask(int3 position)
-        {
-            var chunk = GetOrCreateChunk(position);
-
-            if (chunk == null) return 0;
-
-            var coords = PositionToChunk(position);
-
-            return chunk.GetBitmask(coords);
-        }
-
-        public void UpdateBitmask(int3 position)
-        {
-            SetBitmask(position, CalculateBitmask(position));
-        }
-
-        public byte CalculateBitmask(int3 position)
-        {
-            var tileID = GetBlock(position);
-
-            if (tileID == 0)
-                return 0;
-
-            byte bitmask = 0;
-
-            if (GetBlock(position + new int3(0, 0, 1)) > 0)
-                bitmask.AddBit(Bitmasking.MarchingMask.Forward);
-
-            if (GetBlock(position + new int3(1, 0, 0)) > 0)
-                bitmask.AddBit(Bitmasking.MarchingMask.Right);
-
-            if (GetBlock(position + new int3(0, 1, 0)) > 0)
-                bitmask.AddBit(Bitmasking.MarchingMask.Top);
-
-            if (GetBlock(position + new int3(0, 1, 1)) > 0)
-                bitmask.AddBit(Bitmasking.MarchingMask.ForwardTop);
-
-            if (GetBlock(position + new int3(1, 0, 1)) > 0)
-                bitmask.AddBit(Bitmasking.MarchingMask.ForwardRight);
-
-            if (GetBlock(position + new int3(1, 1, 0)) > 0)
-                bitmask.AddBit(Bitmasking.MarchingMask.TopRight);
-
-            if (GetBlock(position + new int3(1, 1, 1)) > 0)
-                bitmask.AddBit(Bitmasking.MarchingMask.ForwardTopRight);
-
-            return bitmask;
-        }
-
 
         #endregion
 

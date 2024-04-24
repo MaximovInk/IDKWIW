@@ -1,35 +1,280 @@
-﻿using MaximovInk.VoxelEngine;
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
 using Unity.Mathematics;
+using UnityEngine;
+using UnityEngine.Profiling;
+using Debug = UnityEngine.Debug;
 
-public static class MarchingCubesTables
+namespace MaximovInk.VoxelEngine
 {
-    /*
-      public enum MarchingMask : byte
+    public partial class VoxelChunk
+    {
+        private bool right;
+        private bool top;
+        private bool forward;
+        private bool overflow;
+
+        private Dictionary<Vector3, int> smoothedVerticesCache;
+        private float[] cubeValues = new float[8];
+
+        private VoxelChunk targetChunk;
+
+        private float _isoLevel;
+
+        private void GetChunkOverflowCheck(ref int3 pos)
         {
-            Forward = 1,
-            Right = 2,
-            Top = 4,
-            ForwardTop = 8,
-            ForwardRight = 16,
-            TopRight = 32,
-            ForwardTopRight = 64
+            right = pos.x >= ChunkSize.x;
+            top = pos.y >= ChunkSize.y;
+            forward = pos.z >= ChunkSize.z;
+
+            overflow = right || top || forward;
+
+            if (!overflow) return;
+
+            if (right && top && forward)
+                targetChunk = _neighbors.ForwardTopRight;
+            else if (right && top)
+                targetChunk = _neighbors.TopRight;
+            else if (forward && top)
+                targetChunk = _neighbors.ForwardTop;
+            else if (forward && right)
+                targetChunk = _neighbors.ForwardRight;
+            else if (forward)
+                targetChunk = _neighbors.Forward;
+            else if (top)
+                targetChunk = _neighbors.Top;
+            else if (right)
+                targetChunk = _neighbors.Right;
+
+            if (targetChunk == null)
+            {
+                targetChunk = this;
+            }
+
+            if (right)
+                pos.x -= ChunkSize.x;
+
+            if (top)
+                pos.y -= ChunkSize.y;
+
+            if (forward)
+                pos.z -= ChunkSize.z;
         }
-     */
 
-    public static Bitmasking.MarchingMask[] Masks = new[]
-    {
-        Bitmasking.MarchingMask.Forward,
-        Bitmasking.MarchingMask.ForwardRight,
-        Bitmasking.MarchingMask.Right,
-        Bitmasking.MarchingMask.None,
-        Bitmasking.MarchingMask.ForwardTop,
-        Bitmasking.MarchingMask.ForwardTopRight,
-        Bitmasking.MarchingMask.TopRight,
-        Bitmasking.MarchingMask.Top,
-    };
+        private float3 InterpolateEdges(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, float valueAtVertex2)
+        {
+            if (Mathf.Abs(valueAtVertex1) < 0.00001f)
+                return edgeVertex1;
 
-    public static int3[] cornerOffsetsInt = new int3[]
-    {
+            if (Mathf.Abs(valueAtVertex2) < 0.00001f)
+                return edgeVertex2;
+
+            var atVertex1 = valueAtVertex2 - valueAtVertex1;
+
+            if (Mathf.Abs(atVertex1) < 0.00001f)
+                return edgeVertex1;
+
+            return edgeVertex1 + (_isoLevel - valueAtVertex1) / (atVertex1) * (edgeVertex2 - edgeVertex1);
+        }
+
+        private int GetConfiguration(int x, int y, int z)
+        {
+            int cubeIndex = 0;
+
+            for (int i = 0; i < 8; i++)
+            {
+                var offset = offsets[i];
+
+                var value = GetValue(new int3(x + offset.x, y + offset.y, z + offset.z), true);
+
+                cubeValues[i] = value / 255f;
+
+                if (value < Terrain.IsoLevel)
+                {
+                    cubeIndex |= 1 << i;
+                }
+            }
+
+            return cubeIndex;
+        }
+
+        private void MeshingThread()
+        {
+            Profiler.BeginSample("Meshing");
+
+            _meshData.Clear();
+
+            smoothedVerticesCache.Clear();
+
+            var smoothing = !Terrain.FlatShading;
+            _isoLevel = Terrain.IsoLevel / 255f;
+
+            for (var index = 0; index < _data.ArraySize; index++)
+            {
+                var pos = VoxelUtility.IndexToPos(index);
+                var posFloat = pos * BlockSize;
+
+                Profiler.BeginSample("GetConfiguration");
+                var cubeIndex = GetConfiguration(pos.x, pos.y, pos.z);
+
+                Profiler.EndSample();
+
+                if (cubeIndex is 0 or 255)
+                {
+                    continue;
+                }
+
+                Profiler.BeginSample("edges var");
+
+
+                var edges = triTable[cubeIndex];
+                Profiler.EndSample();
+
+                for (var i = 0; edges[i] != -1 && i < 12; i += 3)
+                {
+                    Profiler.BeginSample("find edges");
+
+                    var e00 = edgeConnections[edges[i]][0];
+                    var e01 = edgeConnections[edges[i]][1];
+
+                    var e10 = edgeConnections[edges[i + 1]][0];
+                    var e11 = edgeConnections[edges[i + 1]][1];
+
+                    var e20 = edgeConnections[edges[i + 2]][0];
+                    var e21 = edgeConnections[edges[i + 2]][1];
+
+                    var a = InterpolateEdges(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01],
+                        cubeValues[e01]) * BlockSize + posFloat;
+
+                    var b = InterpolateEdges(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11],
+                        cubeValues[e11]) * BlockSize + posFloat;
+
+                    var c = InterpolateEdges(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21],
+                        cubeValues[e21]) * BlockSize + posFloat;
+
+                    Profiler.EndSample();
+
+                    if (a.Equals(b) || a.Equals(c) || b.Equals(c)) continue;
+
+                    var normal = math.normalize(math.cross(b - a, c - a));
+
+                    if (smoothing)
+                    {
+                        Profiler.BeginSample("smoothing");
+                        if (smoothedVerticesCache.TryGetValue(c, out var pointC))
+                        {
+                            Profiler.BeginSample("getc");
+
+                            _meshData.Triangles.Add(pointC); 
+                            
+                            Profiler.EndSample();
+                        }
+                        else
+                        {
+                            Profiler.BeginSample("addc");
+
+                            var idx = smoothedVerticesCache.Count;
+                            smoothedVerticesCache[c] = idx;
+                            _meshData.Normals.Add(normal);
+                            _meshData.Vertices.Add(c);
+
+                            _meshData.Triangles.Add(idx);
+                            
+                            Profiler.EndSample();
+                        }
+
+                        if (smoothedVerticesCache.TryGetValue(a, out var pointA))
+                        {
+                            Profiler.BeginSample("geta");
+
+                            _meshData.Triangles.Add(pointA);
+                            
+                            Profiler.EndSample();
+                        }
+                        else
+                        {
+                            Profiler.BeginSample("adda");
+
+                            var idx = smoothedVerticesCache.Count;
+                            smoothedVerticesCache[a] = idx;
+                            _meshData.Normals.Add(normal);
+                            _meshData.Vertices.Add(a);
+
+                            _meshData.Triangles.Add(idx); 
+                            
+                            Profiler.EndSample();
+                        }
+
+                        if (smoothedVerticesCache.TryGetValue(b, out var pointB))
+                        {
+                            Profiler.BeginSample("getb");
+
+                            _meshData.Triangles.Add(pointB);
+                            
+                            Profiler.EndSample();
+                        }
+                        else
+                        {
+                            Profiler.BeginSample("addb");
+
+                            var idx = smoothedVerticesCache.Count;
+                            smoothedVerticesCache[b] = idx;
+                            _meshData.Normals.Add(normal);
+                            _meshData.Vertices.Add(b);
+
+                            _meshData.Triangles.Add(idx);
+                            
+                            Profiler.EndSample();
+                        }
+
+                        Profiler.EndSample();
+                    }
+                    else
+                    {
+                        Profiler.BeginSample("flat");
+                        _meshData.Triangles.Add(_meshData.Vertices.Count);
+                        _meshData.Triangles.Add(_meshData.Vertices.Count + 1);
+                        _meshData.Triangles.Add(_meshData.Vertices.Count + 2);
+
+                        _meshData.Vertices.Add(a);
+                        _meshData.Vertices.Add(b);
+                        _meshData.Vertices.Add(c);
+
+                        _meshData.Normals.Add(normal);
+                        _meshData.Normals.Add(normal);
+                        _meshData.Normals.Add(normal);
+
+                        Profiler.EndSample();
+                    }
+                }
+            }
+
+            _invokeApplyMesh = true;
+
+            Profiler.EndSample();
+        }
+
+        private void Generate()
+        {
+            var timer = new Stopwatch();
+            timer.Start();
+
+            MeshingThread();
+
+            timer.Stop();
+
+            TimeSpan timeTaken = timer.Elapsed;
+
+            Debug.Log($"{Position} " + timeTaken.TotalMilliseconds);
+        }
+
+
+
+
+
+        private static readonly int3[] offsets = new int3[]
+   {
         new(0,0,1),
         new(1,0,1),
         new(1,0,0),
@@ -38,9 +283,9 @@ public static class MarchingCubesTables
         new(1,1,1),
         new(1,1,0),
         new(0,1,0),
-    };
+   };
 
-    public static float3[] cornerOffsets = {
+        private static readonly float3[] cornerOffsets = {
         new(0, 0, 1), // v0
         new(1, 0, 1), // v1
         new(1, 0, 0), // v2
@@ -51,13 +296,13 @@ public static class MarchingCubesTables
         new(0, 1, 0)  // v7
     };
 
-    public static int[][] edgeConnections = {
+        private static readonly int[][] edgeConnections = {
         new[] {0,1}, new[] {1,2}, new[] {2,3}, new[] {3,0},
         new[] {4,5}, new[] {5,6}, new[] {6,7}, new[] {7,4},
         new[] {0,4}, new[] {1,5}, new[] {2,6}, new[] {3,7}
     };
 
-    public static int[][] triTable = {
+        private static readonly int[][] triTable = {
         new[] {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
         new[] {0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
         new[] {0, 1, 9, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
@@ -315,4 +560,5 @@ public static class MarchingCubesTables
         new[] {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
         new[] {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
     };
+    }
 }
