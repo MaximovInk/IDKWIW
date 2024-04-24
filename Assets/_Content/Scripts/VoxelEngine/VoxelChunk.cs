@@ -3,6 +3,7 @@ using Unity.Mathematics;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Profiling;
+using static UnityEditor.PlayerSettings;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -119,23 +120,8 @@ namespace MaximovInk.VoxelEngine
             return true;
         }
 
-        public byte GetValue(int3 position, bool autoNeighbor = true)
+        public byte GetValue(int3 position)
         {
-            if (autoNeighbor)
-            {
-                targetChunk = this;
-
-                GetChunkOverflowCheck(ref position);
-
-                var index = VoxelUtility.PosToIndexInt(position);
-
-                if (overflow && targetChunk == this) return 0;
-
-                if (targetChunk._data.Blocks[index] == 0) return 0;
-
-                return targetChunk._data.Value[index];
-            }
-
             if (position.x >= ChunkSize.x || position.y >= ChunkSize.y || position.z >= ChunkSize.z)
             {
                 return 0;
@@ -151,21 +137,8 @@ namespace MaximovInk.VoxelEngine
 
         }
 
-        public ushort GetBlock(int3 position, bool autoNeighbor = false)
+        public ushort GetBlock(int3 position)
         {
-            if (autoNeighbor)
-            {
-                targetChunk = this;
-
-                GetChunkOverflowCheck(ref position);
-
-                var index = VoxelUtility.PosToIndexInt(position);
-
-                if (overflow && targetChunk == this) return 0;
-
-                return targetChunk._data.Blocks[index];
-            }
-
             if (position.x >= ChunkSize.x || position.y >= ChunkSize.y || position.z >= ChunkSize.z)
             {
                 return 0;

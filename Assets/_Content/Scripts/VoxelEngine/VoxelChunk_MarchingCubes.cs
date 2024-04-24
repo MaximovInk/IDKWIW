@@ -4,17 +4,13 @@ using System.Diagnostics;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
+using UnityEngine.UIElements;
 using Debug = UnityEngine.Debug;
 
 namespace MaximovInk.VoxelEngine
 {
     public partial class VoxelChunk
     {
-        private bool right;
-        private bool top;
-        private bool forward;
-        private bool overflow;
-
         private Dictionary<Vector3, int> smoothedVerticesCache;
         private float[] cubeValues = new float[8];
 
@@ -22,16 +18,8 @@ namespace MaximovInk.VoxelEngine
 
         private float _isoLevel;
 
-        private void GetChunkOverflowCheck(ref int3 pos)
+        private void GetChunkOverflowCheck(bool right, bool top, bool forward, ref int3 pos)
         {
-            right = pos.x >= ChunkSize.x;
-            top = pos.y >= ChunkSize.y;
-            forward = pos.z >= ChunkSize.z;
-
-            overflow = right || top || forward;
-
-            if (!overflow) return;
-
             if (right && top && forward)
                 targetChunk = _neighbors.ForwardTopRight;
             else if (right && top)
@@ -80,13 +68,34 @@ namespace MaximovInk.VoxelEngine
 
         private int GetConfiguration(int x, int y, int z)
         {
-            int cubeIndex = 0;
+            var cubeIndex = 0;
 
             for (int i = 0; i < 8; i++)
             {
                 var offset = offsets[i];
 
-                var value = GetValue(new int3(x + offset.x, y + offset.y, z + offset.z), true);
+                var pos = new int3(x + offset.x, y + offset.y, z + offset.z);
+                var index = VoxelUtility.PosToIndexInt(pos);
+                targetChunk = this;
+
+                Profiler.BeginSample("GetChunk");
+
+                var right = pos.x >= ChunkSize.x;
+                var top = pos.y >= ChunkSize.y;
+                var forward = pos.z >= ChunkSize.z;
+
+                var overflow = right || top || forward;
+
+                if(overflow)
+                    GetChunkOverflowCheck(right, top, forward, ref pos);
+
+                Profiler.EndSample();
+
+                float value;
+                if ((overflow && targetChunk == this) || targetChunk._data.Blocks[index] == 0)
+                    value = 0f;
+                else
+                    value = targetChunk._data.Value[index];
 
                 cubeValues[i] = value / 255f;
 
@@ -98,6 +107,7 @@ namespace MaximovInk.VoxelEngine
 
             return cubeIndex;
         }
+
 
         private void MeshingThread()
         {
@@ -268,10 +278,6 @@ namespace MaximovInk.VoxelEngine
 
             Debug.Log($"{Position} " + timeTaken.TotalMilliseconds);
         }
-
-
-
-
 
         private static readonly int3[] offsets = new int3[]
    {
