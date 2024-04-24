@@ -6776,7 +6776,7 @@ MonoBehaviour:
   _seed: 318
   _genDelay: 0.2
   _minY: 3
-  FlatShading: 1
+  FlatShading: 0
 --- !u!1 &1484472641
 GameObject:
   m_ObjectHideFlags: 0
