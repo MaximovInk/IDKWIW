@@ -6,11 +6,13 @@ namespace MaximovInk.VoxelEngine
     {
         public ushort[] Blocks;
         public byte[] Value;
+        public byte[] Bitmask;
 
         public ChunkData(int width, int height, int depth)
         {
             Blocks = new ushort[width * height * depth];
             Value = new byte[width * height * depth];
+            Bitmask = new byte[width * height * depth];
 
             Clear();
         }
@@ -21,6 +23,7 @@ namespace MaximovInk.VoxelEngine
             {
                 Blocks[i] = 0;
                 Value[i] = 0;
+                Bitmask[i] = 0;
             }
         }
 

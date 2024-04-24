@@ -4,7 +4,10 @@ using System.Diagnostics;
 using System.Linq;
 using System.Threading.Tasks;
 using Unity.Mathematics;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Profiling;
+using UnityEngine.UIElements;
 using Debug = UnityEngine.Debug;
 
 namespace MaximovInk.VoxelEngine
@@ -57,15 +60,24 @@ namespace MaximovInk.VoxelEngine
 
             if (_invokeApplyMesh)
             {
+                Profiler.BeginSample("ApplyMesh");
                 _invokeApplyMesh = false;
+
+                Profiler.BeginSample("Send data to mesh");
                 _meshData.ApplyToMesh();
+                Profiler.EndSample();
 
-                if (!Terrain.FlatShading)
-                    _meshData.GetMesh().RecalculateNormals(180, 0.5f);
 
+                Profiler.BeginSample("Recalculate normals");
+                //if (!Terrain.FlatShading)
+                  //  _meshData.GetMesh().RecalculateNormals(180, 0.5f);
+                Profiler.EndSample();
 
                 //_meshCollider.sharedMesh = _meshData.GetMesh();
+                Profiler.EndSample();
 
+
+                EditorApplication.isPaused = true;
             }
         }
 
@@ -95,7 +107,14 @@ namespace MaximovInk.VoxelEngine
 
             ApplyMaterials();
 
-          
+            var maxTriangles = ChunkSize.x * ChunkSize.y * ChunkSize.z * 16;
+            var maxVertices = ChunkSize.x * ChunkSize.y * ChunkSize.z * 16;
+
+            smoothedVertices = new Dictionary<Vector3, int>(ChunkSize.x * ChunkSize.y * ChunkSize.z * 16);
+            normals = new List<Vector3>(maxVertices);
+            flatVertices = new List<Vector3>(maxVertices);
+            triangles = new List<int>(maxTriangles);
+
 
             _isDirty = true;
         }
@@ -110,70 +129,83 @@ namespace MaximovInk.VoxelEngine
 
         #region Data
 
+        public byte GetBitmask(int3 position)
+        {
+            return _data.Bitmask[VoxelUtility.PosToIndexInt(position)];
+        }
+
+        public void SetBitmask(int3 position, byte bitmask)
+        {
+            var index = VoxelUtility.PosToIndexInt(position);
+
+            var changed = _data.Bitmask[index] != bitmask;
+
+            _data.Bitmask[index] = bitmask;
+
+            _isDirty = changed;
+        }
+
         public bool SetBlock(ushort id, int3 position)
         {
             var index = VoxelUtility.PosToIndexInt(position);
 
+            _isDirty = true;
+
             if (_data.Blocks[index] == id) return false;
 
             _data.Blocks[index] = id;
-            _isDirty = true;
+        
 
             return true;
         }
 
         private void CacheNeighbors()
         {
+            Profiler.BeginSample("Neighbors");
+
             Vector3Int pos = new Vector3Int(Position.x, Position.y, Position.z);
 
             if (_neighbors.Forward == null)
-            {
                 _neighbors.Forward = Terrain.GetChunkByPos(pos + Vector3Int.forward, false);
-            }
 
             if (_neighbors.Top == null)
-            {
                 _neighbors.Top = Terrain.GetChunkByPos(pos + Vector3Int.up, false);
-            }
 
             if (_neighbors.Right == null)
-            {
                 _neighbors.Right = Terrain.GetChunkByPos(pos + Vector3Int.right, false);
-            }
 
             if (_neighbors.ForwardTop == null)
-            {
                 _neighbors.ForwardTop = Terrain.GetChunkByPos(pos + Vector3Int.forward + Vector3Int.up, false);
-            }
 
             if (_neighbors.ForwardRight == null)
-            {
                 _neighbors.ForwardRight = Terrain.GetChunkByPos(pos + Vector3Int.forward + Vector3Int.right, false);
-            }
 
             if (_neighbors.TopRight == null)
-            {
                 _neighbors.TopRight = Terrain.GetChunkByPos(pos + Vector3Int.up + Vector3Int.right, false);
-            }
 
             if (_neighbors.ForwardTopRight == null)
-            {
                 _neighbors.ForwardTopRight =
                     Terrain.GetChunkByPos(pos + Vector3Int.forward + Vector3Int.up + Vector3Int.right, false);
-            }
+
+            Profiler.EndSample();
         }
 
-        private VoxelChunk GetChunkOverflowCheck(ref int3 pos, out bool overflow)
+        private bool right;
+        private bool top;
+        private bool forward;
+        private bool overflow;
+
+        private VoxelChunk targetChunk;
+
+        private void GetChunkOverflowCheck(ref int3 pos)
         {
-            var right = pos.x >= ChunkSize.x;
-            var top = pos.y >= ChunkSize.y;
-            var forward = pos.z >= ChunkSize.z;
+            right = pos.x >= ChunkSize.x;
+            top = pos.y >= ChunkSize.y;
+            forward = pos.z >= ChunkSize.z;
 
             overflow = right || top || forward;
 
-            if (!overflow) return this;
-
-            VoxelChunk targetChunk = null;
+            if (!overflow) return;
 
             if (right && top && forward)
                 targetChunk = _neighbors.ForwardTopRight;
@@ -192,7 +224,7 @@ namespace MaximovInk.VoxelEngine
 
             if (targetChunk == null)
             {
-                return this;
+                targetChunk= this;
             }
 
             if (right)
@@ -203,19 +235,21 @@ namespace MaximovInk.VoxelEngine
 
             if (forward)
                 pos.z -= ChunkSize.z;
-
-            return targetChunk;
         }
 
         public ushort GetBlock(int3 position, bool autoNeighbor = false)
         {
             if (autoNeighbor)
             {
-                var chunk = GetChunkOverflowCheck(ref position, out var overflow);
+                targetChunk = this;
 
-                if (overflow && chunk == this) return 0;
+                GetChunkOverflowCheck(ref position);
 
-                return chunk.GetBlock(position, false);
+                var index = VoxelUtility.PosToIndexInt(position);
+
+                if (overflow && targetChunk == this) return 0;
+
+                return targetChunk._data.Blocks[index];
             }
 
             if (position.x >= ChunkSize.x || position.y >= ChunkSize.y || position.z >= ChunkSize.z)
@@ -223,8 +257,10 @@ namespace MaximovInk.VoxelEngine
                 return 0;
             }
 
-            var index = VoxelUtility.PosToIndexInt(position);
-            return _data.Blocks[index];
+            {
+                var index = VoxelUtility.PosToIndexInt(position);
+                return _data.Blocks[index];
+            }
         }
         public ushort GetBlock(int x, int y, int z, bool autoNeighbor = false)
         {
@@ -247,19 +283,19 @@ namespace MaximovInk.VoxelEngine
 
         public float GetValue(int3 position, bool autoNeighbor =true)
         {
-
-
             if (autoNeighbor)
             {
-                var chunk = GetChunkOverflowCheck(ref position, out var overflow);
+                targetChunk = this;
+
+                GetChunkOverflowCheck(ref position);
 
                 var index = VoxelUtility.PosToIndexInt(position);
 
-                if (overflow && chunk == this) return 0;
+                if (overflow && targetChunk == this) return 0;
 
-                if (chunk._data.Blocks[index] == 0) return 0;
+                if (targetChunk._data.Blocks[index] == 0) return 0;
 
-                return chunk._data.Value[index] / 255f;
+                return targetChunk._data.Value[index] / 255f;
             }
 
             if (position.x >= ChunkSize.x || position.y >= ChunkSize.y || position.z >= ChunkSize.z)
@@ -321,24 +357,27 @@ namespace MaximovInk.VoxelEngine
         private int[][] edgeConnections => MarchingCubesTables.edgeConnections;
         private float3[] cornerOffsets => MarchingCubesTables.cornerOffsets;
 
+        private int3[] offsets => MarchingCubesTables.cornerOffsetsInt;
 
-        private Dictionary<Vector3, int> smoothedVertices = new ();
+
+        private Dictionary<Vector3, int> smoothedVertices;
         private float[] cubeValues = new float[8];
-        private List<Vector3> normals = new();
-        private List<Vector3> flatVertices = new();
-        private List<int> triangles = new();
+        private List<Vector3> normals;
+        private List<Vector3> flatVertices;
+        private List<int> triangles;
 
         private int GetConfiguration(int x, int y, int z)
         {
             int cubeIndex = 0;
 
-            var offsets = MarchingCubesTables.cornerOffsetsInt;
 
             for (int i = 0; i < 8; i++)
             {
                 var offset = offsets[i];
 
+
                 var value = GetValue(x + offset.x, y + offset.y, z + offset.z, true);
+
 
                 cubeValues[i] = value;
 
@@ -353,6 +392,7 @@ namespace MaximovInk.VoxelEngine
 
         private void MeshingThread()
         {
+            Profiler.BeginSample("Meshing");
             smoothedVertices.Clear();
             normals.Clear();
             flatVertices.Clear();
@@ -366,17 +406,26 @@ namespace MaximovInk.VoxelEngine
                 var pos = VoxelUtility.IndexToPos(index);
                 var posFloat = pos * BlockSize;
 
+                Profiler.BeginSample("GetConfiguration");
                 var cubeIndex = GetConfiguration(pos.x, pos.y, pos.z);
+
+                Profiler.EndSample();
 
                 if (cubeIndex is 0 or 255)
                 {
                     continue;
                 }
 
+                Profiler.BeginSample("edges var");
+
+
                 var edges = triTable[cubeIndex];
+                Profiler.EndSample();
 
                 for (var i = 0; edges[i] != -1 && i < 12; i += 3)
                 {
+                    Profiler.BeginSample("find edges");
+
                     var e00 = edgeConnections[edges[i]][0];
                     var e01 = edgeConnections[edges[i]][1];
 
@@ -395,54 +444,65 @@ namespace MaximovInk.VoxelEngine
                     var c = InterpolateEdges(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21],
                         cubeValues[e21]) * BlockSize + posFloat;
 
+                    Profiler.EndSample();
+
                     if (a.Equals(b) || a.Equals(c) || b.Equals(c)) continue;
 
                     var normal = math.normalize(math.cross(b - a, c - a));
 
                     if (smoothing)
                     {
+                        Profiler.BeginSample("smoothing");
                         if (smoothedVertices.TryGetValue(c, out var pointC))
                         {
-                            triangles.Add(pointC);
+                            Profiler.BeginSample("getc");
+                            triangles.Add(pointC); Profiler.EndSample();
                         }
                         else
                         {
+                            Profiler.BeginSample("addc");
                             var idx = smoothedVertices.Count;
-                            smoothedVertices.Add(c, idx);
+                            smoothedVertices[c] = idx;
                             normals.Add(normal);
 
-                            triangles.Add(idx);
+                            triangles.Add(idx); Profiler.EndSample();
                         }
 
                         if (smoothedVertices.TryGetValue(a, out var pointA))
                         {
-                            triangles.Add(pointA);
+                            Profiler.BeginSample("geta");
+                            triangles.Add(pointA); Profiler.EndSample();
                         }
                         else
                         {
+                            Profiler.BeginSample("adda");
                             var idx = smoothedVertices.Count;
-                            smoothedVertices.Add(a, idx);
+                            smoothedVertices[a] = idx;
                             normals.Add(normal);
 
-                            triangles.Add(idx);
+                            triangles.Add(idx); Profiler.EndSample();
                         }
 
                         if (smoothedVertices.TryGetValue(b, out var pointB))
                         {
-                            triangles.Add(pointB);
+                            Profiler.BeginSample("getb");
+                            triangles.Add(pointB); Profiler.EndSample();
                         }
                         else
                         {
+                            Profiler.BeginSample("addb");
                             var idx = smoothedVertices.Count;
-                            smoothedVertices.Add(b, idx);
+                            smoothedVertices[b] = idx;
                             normals.Add(normal);
 
-                            triangles.Add(idx);
+                            triangles.Add(idx); Profiler.EndSample();
                         }
 
+                        Profiler.EndSample();
                     }
                     else
                     {
+                        Profiler.BeginSample("flat");
                         triangles.Add(flatVertices.Count);
                         triangles.Add(flatVertices.Count + 1);
                         triangles.Add(flatVertices.Count + 2);
@@ -454,6 +514,8 @@ namespace MaximovInk.VoxelEngine
                         normals.Add(normal);
                         normals.Add(normal);
                         normals.Add(normal);
+
+                        Profiler.EndSample();
                     }
                 }
             }
@@ -479,6 +541,8 @@ namespace MaximovInk.VoxelEngine
 
 
             _invokeApplyMesh = true;
+
+            Profiler.EndSample();
         }
 
         private void Generate()

@@ -41,12 +41,12 @@ namespace MaximovInk
         {
             Mesh.Clear();
 
-            Mesh.vertices = Vertices.ToArray();
-            Mesh.triangles = Triangles.ToArray();
+            Mesh.SetVertices(Vertices);
+            Mesh.SetTriangles(Triangles, 0);
 
-            Mesh.uv = Uvs.ToArray();
-            Mesh.colors32 = Colors.ToArray();
-            Mesh.normals = Normals.ToArray();
+            //Mesh.SetUVs(0, Uvs);
+            //Mesh.SetColors(Colors);
+            //Mesh.SetNormals(Normals);
 
           //  Mesh.RecalculateNormals();
           //  Mesh.RecalculateTangents();

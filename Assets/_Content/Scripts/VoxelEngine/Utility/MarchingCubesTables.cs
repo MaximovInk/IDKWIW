@@ -1,7 +1,33 @@
-﻿using Unity.Mathematics;
+﻿using MaximovInk.VoxelEngine;
+using Unity.Mathematics;
 
 public static class MarchingCubesTables
 {
+    /*
+      public enum MarchingMask : byte
+        {
+            Forward = 1,
+            Right = 2,
+            Top = 4,
+            ForwardTop = 8,
+            ForwardRight = 16,
+            TopRight = 32,
+            ForwardTopRight = 64
+        }
+     */
+
+    public static Bitmasking.MarchingMask[] Masks = new[]
+    {
+        Bitmasking.MarchingMask.Forward,
+        Bitmasking.MarchingMask.ForwardRight,
+        Bitmasking.MarchingMask.Right,
+        Bitmasking.MarchingMask.None,
+        Bitmasking.MarchingMask.ForwardTop,
+        Bitmasking.MarchingMask.ForwardTopRight,
+        Bitmasking.MarchingMask.TopRight,
+        Bitmasking.MarchingMask.Top,
+    };
+
     public static int3[] cornerOffsetsInt = new int3[]
     {
         new(0,0,1),
