@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using Unity.Collections;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace MaximovInk
@@ -35,12 +37,11 @@ namespace MaximovInk
             Normals.Clear();
         }
 
-
         public void ApplyToMesh()
         {
             Mesh.Clear();
-            Mesh.vertices = Vertices.ToArray();
 
+            Mesh.vertices = Vertices.ToArray();
             Mesh.triangles = Triangles.ToArray();
 
             Mesh.uv = Uvs.ToArray();

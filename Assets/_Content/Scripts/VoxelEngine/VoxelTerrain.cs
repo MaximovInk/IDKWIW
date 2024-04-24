@@ -134,6 +134,7 @@ namespace MaximovInk.VoxelEngine
 
             chunk.SetValue( PositionToChunk(position), value);
         }
+
         #endregion
 
         #region PositionConvertation
