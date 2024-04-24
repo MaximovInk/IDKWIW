@@ -31,10 +31,6 @@ public static class MarchingCubesTables
         new[] {0,4}, new[] {1,5}, new[] {2,6}, new[] {3,7}
     };
 
-
-
-    
-     
     public static int[][] triTable = {
         new[] {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
         new[] {0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},

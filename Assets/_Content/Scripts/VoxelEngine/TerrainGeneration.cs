@@ -80,7 +80,7 @@ namespace MaximovInk.VoxelEngine
             }
         }
 
-        public int GetHeight(float x, float y)
+        public float GetHeight(float x, float y)
         {
             double height = 0;
 
@@ -100,7 +100,7 @@ namespace MaximovInk.VoxelEngine
 
             height *= _amplitude;
 
-            return (int)(height);
+            return (float)height;
         }
 
         private string GetBlockId(int height)
@@ -130,17 +130,20 @@ namespace MaximovInk.VoxelEngine
                 for (int iz = (int)(min.y); iz < max.y; iz++)
                 {
                     var height = Mathf.Max(_minY, _minY + GetHeight(ix, iz));
+                    var heightInt = (int)height;
 
-                    for (int iy = 0; iy < height; iy++)
+                    var reminder = height - heightInt;
+
+                    for (int iy = 0; iy < heightInt; iy++)
                     {
                         var blockId = GetBlockId(iy);
 
-                        //Debug.Log($"{iy} {blockId}");
+                        var pos = new int3(ix, iy, iz);
 
-                        _terrain.SetBlock(blockId, new int3(ix, iy, iz));
+                        _terrain.SetBlock(blockId, pos);
+
+                        _terrain.SetValue((height - pos.y)/_amplitude , pos);
                     }
-
-                    _terrain.SetBlock(string.Empty, new int3(ix,(int)_amplitude,iz));
 
                 }
             }

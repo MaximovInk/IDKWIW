@@ -10,7 +10,9 @@ namespace MaximovInk.VoxelEngine
     public class VoxelTerrain : MonoBehaviour
     {
         public int3 ChunkSize;
-        public float BlockSize;
+        public float3 BlockSize;
+
+        public float IsoLevel = 0.5f;
 
         private readonly Dictionary<int3, VoxelChunk> _chunksCache = new();
 
@@ -93,9 +95,9 @@ namespace MaximovInk.VoxelEngine
             go.transform.SetParent(transform);
             go.transform.SetLocalPositionAndRotation(
                 new Vector3(
-                    chunkPos.x * ChunkSize.x * BlockSize,
-                    chunkPos.y * ChunkSize.y * BlockSize,
-                    chunkPos.z * ChunkSize.z * BlockSize),
+                    chunkPos.x * ChunkSize.x * BlockSize.x,
+                    chunkPos.y * ChunkSize.y * BlockSize.y,
+                    chunkPos.z * ChunkSize.z * BlockSize.z),
                 Quaternion.identity);
             go.transform.localScale = Vector3.one;
             var chunk = go.AddComponent<VoxelChunk>();
@@ -126,6 +128,12 @@ namespace MaximovInk.VoxelEngine
             chunk.SetBlock((ushort)(index), PositionToChunk(position));
         }
 
+        public void SetValue(float value, int3 position)
+        {
+            var chunk = GetOrCreateChunk(position.x, position.y, position.z);
+
+            chunk.SetValue( PositionToChunk(position), value);
+        }
         #endregion
 
         #region PositionConvertation

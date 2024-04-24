@@ -47,8 +47,8 @@ namespace MaximovInk
             Mesh.colors32 = Colors.ToArray();
             Mesh.normals = Normals.ToArray();
 
-           // Mesh.RecalculateNormals();
-            //Mesh.RecalculateTangents();
+          //  Mesh.RecalculateNormals();
+          //  Mesh.RecalculateTangents();
         }
 
         public Mesh GetMesh()
