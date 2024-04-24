@@ -43,6 +43,8 @@ namespace MaximovInk.VoxelEngine
 
         [SerializeField] private int _minY;
 
+        [SerializeField] private bool _centred;
+
         private float _timer;
 
         private bool _changed = false;
@@ -76,7 +78,6 @@ namespace MaximovInk.VoxelEngine
                 _changed = false;
 
                 Generate();
-
             }
         }
 
@@ -116,7 +117,7 @@ namespace MaximovInk.VoxelEngine
             return "Default";
         }
         
-        private void Generate()
+        public void Generate()
         {
             _terrain.Clear();
 
@@ -124,6 +125,12 @@ namespace MaximovInk.VoxelEngine
 
             var max = Size / 2f;
             var min = -(Size - max);
+
+            if (!_centred)
+            {
+                min = Vector2.zero;
+                max = Size;
+            }
 
             for (int ix = (int)(min.x) ; ix < max.x; ix++)
             {

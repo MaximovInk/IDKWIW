@@ -6772,10 +6772,11 @@ MonoBehaviour:
   - BlockID: Sand
     FromHeight: 0
   _amplitude: 20
-  Size: {x: 132, y: 132}
+  Size: {x: 16, y: 16}
   _seed: 318
   _genDelay: 0.2
   _minY: 3
+  _centred: 0
   FlatShading: 0
 --- !u!1 &1484472641
 GameObject:
