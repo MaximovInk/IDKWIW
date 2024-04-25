@@ -115,8 +115,6 @@ namespace MaximovInk.VoxelEngine
 
         private void MeshingThread()
         {
-           // Profiler.BeginSample("Meshing");
-
            if (_thread is { IsAlive: true })
            {
                _isDirty = true;
@@ -144,7 +142,12 @@ namespace MaximovInk.VoxelEngine
                         continue;
                     }
 
+                    var blockId = _data.Blocks[index];
+                    var color = VoxelDatabase.GetVoxel(blockId).VertexColor;
+
                     var edges = triTable[cubeIndex];
+
+
 
                     for (var i = 0; edges[i] != -1 && i < 12; i += 3)
                     {
@@ -185,7 +188,7 @@ namespace MaximovInk.VoxelEngine
                                     smoothedVerticesCache[c] = idx;
                                     _meshData.Normals.Add(normal);
                                     _meshData.Vertices.Add(c);
-
+                                    _meshData.Colors.Add(color);
                                     _meshData.Triangles.Add(idx);
                                 }
 
@@ -200,7 +203,7 @@ namespace MaximovInk.VoxelEngine
                                     smoothedVerticesCache[a] = idx;
                                     _meshData.Normals.Add(normal);
                                     _meshData.Vertices.Add(a);
-
+                                    _meshData.Colors.Add(color);
                                     _meshData.Triangles.Add(idx);
 
                                 }
@@ -215,7 +218,7 @@ namespace MaximovInk.VoxelEngine
                                     smoothedVerticesCache[b] = idx;
                                     _meshData.Normals.Add(normal);
                                     _meshData.Vertices.Add(b);
-
+                                    _meshData.Colors.Add(color);
                                     _meshData.Triangles.Add(idx);
                                 }
 
@@ -234,6 +237,10 @@ namespace MaximovInk.VoxelEngine
                                 _meshData.Normals.Add(normal);
                                 _meshData.Normals.Add(normal);
 
+                                _meshData.Colors.Add(color);
+                                _meshData.Colors.Add(color);
+                                _meshData.Colors.Add(color);
+
                             }
                         }
 
@@ -246,9 +253,6 @@ namespace MaximovInk.VoxelEngine
 
             _thread.Start();
 
-
-
-           // Profiler.EndSample();
         }
 
         private void Generate()

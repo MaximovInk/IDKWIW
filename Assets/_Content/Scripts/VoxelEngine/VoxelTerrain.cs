@@ -20,6 +20,11 @@ namespace MaximovInk.VoxelEngine
         private int3 _chunkCachedPos = new(int.MaxValue, int.MaxValue, int.MaxValue);
         private VoxelChunk _chunkLastUsed;
 
+        public Material Material => _material;
+
+        [SerializeField]
+        private Material _material;
+
         public void UpdateImmediately()
         {
             BuildChunkCache();
@@ -163,6 +168,21 @@ namespace MaximovInk.VoxelEngine
             var chunkZ = (gridPos.z < 0 ? (gridPos.z + 1 - ChunkSize.z) : gridPos.z) / ChunkSize.z;
 
             return new int3(chunkX, chunkY, chunkZ);
+        }
+
+        public int3 WorldToGrid(Vector3 worldPos)
+        {
+            var localPos = transform.InverseTransformPoint(worldPos);
+
+            return LocalToGrid(localPos);
+        }
+
+        private int3 LocalToGrid(Vector3 localPos)
+        {
+            return new int3(
+                Mathf.FloorToInt((localPos.x) / BlockSize.x),
+                Mathf.FloorToInt((localPos.y) / BlockSize.y),
+                Mathf.FloorToInt((localPos.z) / BlockSize.z));
         }
 
         #endregion

@@ -108,7 +108,7 @@ namespace MaximovInk.VoxelEngine
             return (float)height;
         }
 
-        private string GetBlockId(int height)
+        private string GetBlockId(float height)
         {
             _biomes = _biomes.OrderByDescending(n => n.FromHeight).ToList();
 
@@ -118,7 +118,7 @@ namespace MaximovInk.VoxelEngine
                     return _biomes[i].BlockID;
             }
 
-            return "Default";
+            return "Dirt";
         }
         
         public void Generate()
@@ -169,15 +169,3 @@ namespace MaximovInk.VoxelEngine
         }
     }
 }
-
-
-/*
-  if (height > _amplitude)
-                    {
-                        Debug.Log($"> {height}");
-                    }
-
-                    if (height <= 0) {
-                        Debug.Log($"0 {height}");
-                    }
- */

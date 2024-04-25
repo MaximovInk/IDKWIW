@@ -7,8 +7,8 @@ namespace MaximovInk.VoxelEngine
     public class VoxelData
     {
         public string Name;
-        public Material Material;
         public Vector4 UV;
+        public Color VertexColor;
     }
 
     public static class VoxelDatabase
@@ -78,11 +78,20 @@ namespace MaximovInk.VoxelEngine
 
         private static void RegisterDefaultBlocks()
         {
-            RegisterBlock(new VoxelData() { UV = new Vector4(0, 0, 1, 1), Name = "Default", Material = Resources.Load<Material>("Materials/Default") });
-            RegisterBlock(new VoxelData() { UV = new Vector4(0, 0, 1, 1), Name = "Type1", Material = Resources.Load<Material>("Materials/Type1") });
-            RegisterBlock(new VoxelData() { UV = new Vector4(0, 0, 1, 1), Name = "Type2", Material = Resources.Load<Material>("Materials/Type2") });
-            RegisterBlock(new VoxelData() { UV = new Vector4(0, 0, 1, 1), Name = "Sand", Material = Resources.Load<Material>("Materials/Sand") });
-            RegisterBlock(new VoxelData() { UV = new Vector4(0, 0, 1, 1), Name = "Rock", Material = Resources.Load<Material>("Materials/Rock") });
+            RegisterBlock(new VoxelData() { UV = new Vector4(0, 0, 1, 1), Name = "Sand", 
+                VertexColor = new Color(147/255f,112/255f,63/255f)});
+
+            RegisterBlock(new VoxelData() { UV = new Vector4(0, 0, 1, 1), Name = "Dirt", 
+                VertexColor = new Color(0.5f, 0.4f, 0.3f) });
+
+            RegisterBlock(new VoxelData() { UV = new Vector4(0, 0, 1, 1), Name = "Grass", 
+                VertexColor = new Color(30/255f, 61/255f, 48/255f)});
+
+            RegisterBlock(new VoxelData() { UV = new Vector4(0, 0, 1, 1), Name = "Rock",
+                VertexColor = Color.gray});
+
+            RegisterBlock(new VoxelData() { UV = new Vector4(0, 0, 1, 1), Name = "Snow",
+                VertexColor = Color.white});
 
         }
 

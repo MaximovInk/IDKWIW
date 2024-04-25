@@ -47,9 +47,7 @@ namespace MaximovInk.VoxelEngine
 
         private void ApplyMaterials()
         {
-            var blocks = VoxelDatabase.GetAllVoxels();
-
-            _meshRenderer.material = blocks[0].Material;
+            _meshRenderer.material = Terrain.Material;
         }
     }
 }

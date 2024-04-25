@@ -19,10 +19,10 @@ namespace MaximovInk.IDKWIW
 
         private HandleType _handleType;
 
-        private CharacterComponents _components;
 
         [SerializeField] private WeaponInstance _currentWeapon;
 
+        private CharacterComponents _components;
         public void Initialize(CharacterComponents componentsRef)
         {
             _components = componentsRef;

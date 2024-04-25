@@ -259,7 +259,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!23 &59832553
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -319,7 +319,7 @@ Transform:
   m_GameObject: {fileID: 59832551}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -6, z: 0}
+  m_LocalPosition: {x: 0, y: -14.5, z: 0}
   m_LocalScale: {x: 100, y: 1, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6730,6 +6730,7 @@ MonoBehaviour:
     z: 1
   IsoLevel: 25
   FlatShading: 1
+  _material: {fileID: 2100000, guid: aad58c289d9dc6547813f08d3b5b17cf, type: 2}
 --- !u!4 &1472512349
 Transform:
   m_ObjectHideFlags: 0
@@ -6739,7 +6740,7 @@ Transform:
   m_GameObject: {fileID: 1472512347}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -10, z: 0}
+  m_LocalPosition: {x: 0, y: -20, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6761,23 +6762,20 @@ MonoBehaviour:
   - Value: 1
     Scale: {x: 100, y: 100}
     Offset: {x: 750, y: 0}
-  - Value: 0
-    Scale: {x: 4.12, y: 4.12}
-    Offset: {x: 0, y: 0}
   _biomes:
   - BlockID: Rock
     FromHeight: 15
-  - BlockID: Type1
+  - BlockID: Grass
     FromHeight: 5
   - BlockID: Sand
     FromHeight: 0
-  _amplitude: 10
-  Size: {x: 132, y: 132}
+  _amplitude: 40
+  Size: {x: 128, y: 128}
   _seed: 318
   _genDelay: 0.2
   _minY: 3
   _centred: 1
-  FlatShading: 1
+  FlatShading: 0
 --- !u!1 &1484472641
 GameObject:
   m_ObjectHideFlags: 0

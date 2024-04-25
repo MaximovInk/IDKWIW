@@ -60,11 +60,16 @@ namespace MaximovInk.VoxelEngine
 
 
                 Profiler.BeginSample("Recalculate normals");
-                //if (!Terrain.FlatShading)
-                  //  _meshData.GetMesh().RecalculateNormals(180, 0.5f);
+                if (!Terrain.FlatShading)
+                    _mesh.RecalculateNormals(180, 0.5f);
                 Profiler.EndSample();
 
-                //_meshCollider.sharedMesh = _meshData.GetMesh();
+                if (_mesh.vertexCount == 0)
+                {
+                    _meshCollider.sharedMesh = null;
+                }
+                else
+                    _meshCollider.sharedMesh = _mesh;
                 Profiler.EndSample();
 
 
