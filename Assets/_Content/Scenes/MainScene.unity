@@ -6728,7 +6728,7 @@ MonoBehaviour:
     x: 1
     y: 1
     z: 1
-  IsoLevel: 0.1
+  IsoLevel: 25
   FlatShading: 1
 --- !u!4 &1472512349
 Transform:
@@ -6761,7 +6761,7 @@ MonoBehaviour:
   - Value: 1
     Scale: {x: 100, y: 100}
     Offset: {x: 750, y: 0}
-  - Value: 0.02
+  - Value: 0
     Scale: {x: 4.12, y: 4.12}
     Offset: {x: 0, y: 0}
   _biomes:
@@ -6771,13 +6771,13 @@ MonoBehaviour:
     FromHeight: 5
   - BlockID: Sand
     FromHeight: 0
-  _amplitude: 20
-  Size: {x: 16, y: 16}
+  _amplitude: 10
+  Size: {x: 132, y: 132}
   _seed: 318
   _genDelay: 0.2
   _minY: 3
-  _centred: 0
-  FlatShading: 0
+  _centred: 1
+  FlatShading: 1
 --- !u!1 &1484472641
 GameObject:
   m_ObjectHideFlags: 0

@@ -9,6 +9,7 @@ namespace MaximovInk.VoxelEngine
     [System.Serializable]
     public struct NoiseGenerator
     {
+        [Range(0,1)]
         public float Value;
 
         public Vector2 Scale;
@@ -91,7 +92,10 @@ namespace MaximovInk.VoxelEngine
             {
                 var data = _noiseGenerators[i];
 
-                height += data.Value * _noise.Evaluate((data.Offset.x + x) / data.Scale.x, (data.Offset.y + y) / data.Scale.y);
+                var nx = (data.Offset.x + x) / data.Scale.x;
+                var ny = (data.Offset.y + y) / data.Scale.y;
+
+                height += (_noise.Evaluate(nx,ny) + 1)/2f;
                 divider += data.Value;
             }
 
@@ -132,16 +136,20 @@ namespace MaximovInk.VoxelEngine
                 max = Size;
             }
 
+            var maxY = _amplitude;
+
             for (int ix = (int)(min.x) ; ix < max.x; ix++)
             {
                 for (int iz = (int)(min.y); iz < max.y; iz++)
                 {
-                    var height = Mathf.Max(_minY, _minY + GetHeight(ix, iz));
-                    var heightInt = (int)height;
+                    var height = GetHeight(ix, iz);
 
-                    var reminder = height - heightInt;
+                    if (height < 0f)
+                    {
+                        Debug.Log(height);
+                    }
 
-                    for (int iy = 0; iy < heightInt; iy++)
+                    for (int iy = 0; iy < height; iy++)
                     {
                         var blockId = GetBlockId(iy);
 
@@ -149,7 +157,9 @@ namespace MaximovInk.VoxelEngine
 
                         _terrain.SetBlock(blockId, pos);
 
-                        _terrain.SetValue((byte)((height - pos.y + _minY) / _amplitude * 255f), pos);
+                        var value = Mathf.Clamp01((height - iy) / (_amplitude + _minY + _terrain.IsoLevel));
+
+                        _terrain.SetValue((byte)(value * 255f), pos);
                     }
 
                 }
@@ -159,3 +169,15 @@ namespace MaximovInk.VoxelEngine
         }
     }
 }
+
+
+/*
+  if (height > _amplitude)
+                    {
+                        Debug.Log($"> {height}");
+                    }
+
+                    if (height <= 0) {
+                        Debug.Log($"0 {height}");
+                    }
+ */
