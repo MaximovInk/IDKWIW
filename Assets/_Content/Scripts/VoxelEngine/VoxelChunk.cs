@@ -27,10 +27,7 @@ namespace MaximovInk.VoxelEngine
 
         public int LOD
         {
-            get
-            {
-                return _lod; 
-            }
+            get => _lod;
             set
             {
                 _isDirty = _lod != value;
@@ -46,33 +43,40 @@ namespace MaximovInk.VoxelEngine
 
         #region UnityMessages
 
-        private void ValidateLodValue()
+        public int ValidateLodValue(int value)
         {
             var limit = Mathf.Min(ChunkSize.x, ChunkSize.z, ChunkSize.y);
 
-            if (_lod < 1)
+            if (value <= 1)
             {
-                _lod = 1;
-                return;
+                value = 1;
+                return value;
             }
 
-            if (_lod > limit)
+            if (value > limit)
             {
-                _lod = limit;
-                return;
+                value = limit;
+                return value;
             }
 
-            if (_lod is 16 or 8 or 4 or 2)
-                return;
+            if (value is 16 or 8 or 4 or 2)
+                return value;
 
-            if (_lod > 16)
-                _lod = 16;
-            else if (_lod > 8)
-                _lod = 8;
-            else if (_lod > 4)
-                _lod = 4;
-            else if (_lod > 2)
-                _lod = 2;
+            if (value > 16)
+                value = 16;
+            else if (value > 8)
+                value = 8;
+            else if (value > 4)
+                value = 4;
+            else
+                value = 2;
+
+            return value;
+        }
+
+        private void ValidateLodValue()
+        {
+            _lod = ValidateLodValue(_lod);
         }
 
         private void Update()
