@@ -48,7 +48,7 @@ namespace MaximovInk.VoxelEngine
                 Generate();
             }
 
-            if (_invokeApplyMesh && _thread is not { IsAlive: true }) 
+            if (_invokeApplyMesh && _currentThread is not { IsAlive: true }) 
             {
                 Profiler.BeginSample("ApplyMesh");
                 _invokeApplyMesh = false;

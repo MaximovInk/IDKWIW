@@ -34,11 +34,11 @@ namespace MaximovInk.IDKWIW
 
                         var pos = terrain.WorldToGrid(hitInfo.point);
 
-                        for (int i = -2; i < 2; i++)
+                        for (int i = -1; i <= 1; i++)
                         {
-                            for (int j = -2; j < 2; j++)
+                            for (int j = -1; j <= 1; j++)
                             {
-                                for (int k = -2; k < 2; k++)
+                                for (int k = -1; k <= 1; k++)
                                 {
                                     var newPos = pos + new int3(i, j, k);
 

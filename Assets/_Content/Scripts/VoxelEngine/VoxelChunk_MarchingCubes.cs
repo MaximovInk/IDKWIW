@@ -110,163 +110,151 @@ namespace MaximovInk.VoxelEngine
             return cubeIndex;
         }
 
-        private Thread _thread;
-
+        private Thread _currentThread;
 
         private void MeshingThread()
         {
-           if (_thread is { IsAlive: true })
-           {
-               _isDirty = true;
-               return;
-           }
-
-           _meshData.Clear();
-
-            smoothedVerticesCache.Clear();
-
             var smoothing = !Terrain.FlatShading;
-            _isoLevel = Terrain.IsoLevel / 255f;
 
-            _thread = new Thread(() =>
+            for (int index = 0; index < _data.ArraySize; index++)
             {
-                for (int index = 0; index < _data.ArraySize; index++)
+                var pos = VoxelUtility.IndexToPos(index);
+                var posFloat = pos * BlockSize;
+
+                var cubeIndex = GetConfiguration(pos.x, pos.y, pos.z);
+
+                if (cubeIndex is 0 or 255)
                 {
-                    var pos = VoxelUtility.IndexToPos(index);
-                    var posFloat = pos * BlockSize;
+                    continue;
+                }
 
-                    var cubeIndex = GetConfiguration(pos.x, pos.y, pos.z);
+                var blockId = _data.Blocks[index];
+                var color = VoxelDatabase.GetVoxel(blockId).VertexColor;
 
-                    if (cubeIndex is 0 or 255)
+                var edges = triTable[cubeIndex];
+
+                for (var i = 0; edges[i] != -1 && i < 12; i += 3)
+                {
+                    var e00 = edgeConnections[edges[i]][0];
+                    var e01 = edgeConnections[edges[i]][1];
+
+                    var e10 = edgeConnections[edges[i + 1]][0];
+                    var e11 = edgeConnections[edges[i + 1]][1];
+
+                    var e20 = edgeConnections[edges[i + 2]][0];
+                    var e21 = edgeConnections[edges[i + 2]][1];
+
+                    var a = InterpolateEdges(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01],
+                        cubeValues[e01]) * BlockSize + posFloat;
+
+                    var b = InterpolateEdges(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11],
+                        cubeValues[e11]) * BlockSize + posFloat;
+
+                    var c = InterpolateEdges(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21],
+                        cubeValues[e21]) * BlockSize + posFloat;
+
+                    if (a.Equals(b) || a.Equals(c) || b.Equals(c)) continue;
+
+                    var normal = math.normalize(math.cross(b - a, c - a));
+
+                    lock (_meshData)
                     {
-                        continue;
-                    }
 
-                    var blockId = _data.Blocks[index];
-                    var color = VoxelDatabase.GetVoxel(blockId).VertexColor;
-
-                    var edges = triTable[cubeIndex];
-
-
-
-                    for (var i = 0; edges[i] != -1 && i < 12; i += 3)
-                    {
-                        var e00 = edgeConnections[edges[i]][0];
-                        var e01 = edgeConnections[edges[i]][1];
-
-                        var e10 = edgeConnections[edges[i + 1]][0];
-                        var e11 = edgeConnections[edges[i + 1]][1];
-
-                        var e20 = edgeConnections[edges[i + 2]][0];
-                        var e21 = edgeConnections[edges[i + 2]][1];
-
-                        var a = InterpolateEdges(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01],
-                            cubeValues[e01]) * BlockSize + posFloat;
-
-                        var b = InterpolateEdges(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11],
-                            cubeValues[e11]) * BlockSize + posFloat;
-
-                        var c = InterpolateEdges(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21],
-                            cubeValues[e21]) * BlockSize + posFloat;
-
-                        if (a.Equals(b) || a.Equals(c) || b.Equals(c)) continue;
-
-                        var normal = math.normalize(math.cross(b - a, c - a));
-
-                        lock (_meshData)
+                        if (smoothing)
                         {
-
-                            if (smoothing)
+                            if (smoothedVerticesCache.TryGetValue(c, out var pointC))
                             {
-                                if (smoothedVerticesCache.TryGetValue(c, out var pointC))
-                                {
-                                    _meshData.Triangles.Add(pointC);
-                                }
-                                else
-                                {
-                                    var idx = smoothedVerticesCache.Count;
-                                    smoothedVerticesCache[c] = idx;
-                                    _meshData.Normals.Add(normal);
-                                    _meshData.Vertices.Add(c);
-                                    _meshData.Colors.Add(color);
-                                    _meshData.Triangles.Add(idx);
-                                }
-
-                                if (smoothedVerticesCache.TryGetValue(a, out var pointA))
-                                {
-                                    _meshData.Triangles.Add(pointA);
-                                }
-                                else
-                                {
-
-                                    var idx = smoothedVerticesCache.Count;
-                                    smoothedVerticesCache[a] = idx;
-                                    _meshData.Normals.Add(normal);
-                                    _meshData.Vertices.Add(a);
-                                    _meshData.Colors.Add(color);
-                                    _meshData.Triangles.Add(idx);
-
-                                }
-
-                                if (smoothedVerticesCache.TryGetValue(b, out var pointB))
-                                {
-                                    _meshData.Triangles.Add(pointB);
-                                }
-                                else
-                                {
-                                    var idx = smoothedVerticesCache.Count;
-                                    smoothedVerticesCache[b] = idx;
-                                    _meshData.Normals.Add(normal);
-                                    _meshData.Vertices.Add(b);
-                                    _meshData.Colors.Add(color);
-                                    _meshData.Triangles.Add(idx);
-                                }
-
+                                _meshData.Triangles.Add(pointC);
                             }
                             else
                             {
-                                _meshData.Triangles.Add(_meshData.Vertices.Count);
-                                _meshData.Triangles.Add(_meshData.Vertices.Count + 1);
-                                _meshData.Triangles.Add(_meshData.Vertices.Count + 2);
-
-                                _meshData.Vertices.Add(a);
-                                _meshData.Vertices.Add(b);
+                                var idx = smoothedVerticesCache.Count;
+                                smoothedVerticesCache[c] = idx;
+                                _meshData.Normals.Add(normal);
                                 _meshData.Vertices.Add(c);
+                                _meshData.Colors.Add(color);
+                                _meshData.Triangles.Add(idx);
+                            }
 
-                                _meshData.Normals.Add(normal);
-                                _meshData.Normals.Add(normal);
-                                _meshData.Normals.Add(normal);
+                            if (smoothedVerticesCache.TryGetValue(a, out var pointA))
+                            {
+                                _meshData.Triangles.Add(pointA);
+                            }
+                            else
+                            {
 
+                                var idx = smoothedVerticesCache.Count;
+                                smoothedVerticesCache[a] = idx;
+                                _meshData.Normals.Add(normal);
+                                _meshData.Vertices.Add(a);
                                 _meshData.Colors.Add(color);
-                                _meshData.Colors.Add(color);
-                                _meshData.Colors.Add(color);
+                                _meshData.Triangles.Add(idx);
 
                             }
-                        }
 
+                            if (smoothedVerticesCache.TryGetValue(b, out var pointB))
+                            {
+                                _meshData.Triangles.Add(pointB);
+                            }
+                            else
+                            {
+                                var idx = smoothedVerticesCache.Count;
+                                smoothedVerticesCache[b] = idx;
+                                _meshData.Normals.Add(normal);
+                                _meshData.Vertices.Add(b);
+                                _meshData.Colors.Add(color);
+                                _meshData.Triangles.Add(idx);
+                            }
+
+                        }
+                        else
+                        {
+                            _meshData.Triangles.Add(_meshData.Vertices.Count);
+                            _meshData.Triangles.Add(_meshData.Vertices.Count + 1);
+                            _meshData.Triangles.Add(_meshData.Vertices.Count + 2);
+
+                            _meshData.Vertices.Add(a);
+                            _meshData.Vertices.Add(b);
+                            _meshData.Vertices.Add(c);
+
+                            _meshData.Normals.Add(normal);
+                            _meshData.Normals.Add(normal);
+                            _meshData.Normals.Add(normal);
+
+                            _meshData.Colors.Add(color);
+                            _meshData.Colors.Add(color);
+                            _meshData.Colors.Add(color);
+
+                        }
                     }
 
                 }
 
-                _invokeApplyMesh = true;
-            });
+            }
 
-            _thread.Start();
-
+            _invokeApplyMesh = true;
         }
 
         private void Generate()
         {
-           // var timer = new Stopwatch();
-           // timer.Start();
+            if (_currentThread is { IsAlive: true })
+            {
+                _isDirty = true;
+                return;
+            }
+
+            _meshData.Clear();
+
+            smoothedVerticesCache.Clear();
+
+           
+            _isoLevel = Terrain.IsoLevel / 255f;
+
+            _currentThread = new Thread(MeshingThread);
 
             MeshingThread();
 
-          //  timer.Stop();
-
-           // TimeSpan timeTaken = timer.Elapsed;
-
-           // Debug.Log($"{Position} " + timeTaken.TotalMilliseconds);
+            _currentThread.Start();
         }
 
         private static readonly int3[] offsets = new int3[]
