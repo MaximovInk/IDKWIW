@@ -25,7 +25,55 @@ namespace MaximovInk.VoxelEngine
 
         private ChunkNeighbors _neighbors;
 
+        public int LOD
+        {
+            get
+            {
+                return _lod; 
+            }
+            set
+            {
+                _isDirty = _lod != value;
+
+                _lod = value;
+
+                ValidateLodValue();
+            }
+        }
+
+        [SerializeField]
+        private int _lod;
+
         #region UnityMessages
+
+        private void ValidateLodValue()
+        {
+            var limit = Mathf.Min(ChunkSize.x, ChunkSize.z, ChunkSize.y);
+
+            if (_lod < 1)
+            {
+                _lod = 1;
+                return;
+            }
+
+            if (_lod > limit)
+            {
+                _lod = limit;
+                return;
+            }
+
+            if (_lod is 16 or 8 or 4 or 2)
+                return;
+
+            if (_lod > 16)
+                _lod = 16;
+            else if (_lod > 8)
+                _lod = 8;
+            else if (_lod > 4)
+                _lod = 4;
+            else if (_lod > 2)
+                _lod = 2;
+        }
 
         private void Update()
         {
@@ -95,6 +143,7 @@ namespace MaximovInk.VoxelEngine
             _data = new ChunkData(ChunkSize.x, ChunkSize.y, ChunkSize.z);
 
             InitializeRenderer();
+            LOD = 1;
         }
 
         public void UpdateImmediately()
