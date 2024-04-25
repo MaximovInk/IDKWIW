@@ -149,7 +149,7 @@ namespace MaximovInk.VoxelEngine
 
                         _terrain.SetBlock(blockId, pos);
 
-                        _terrain.SetValue((byte)((height - pos.y) / _amplitude * 255f), pos);
+                        _terrain.SetValue((byte)((height - pos.y + _minY) / _amplitude * 255f), pos);
                     }
 
                 }

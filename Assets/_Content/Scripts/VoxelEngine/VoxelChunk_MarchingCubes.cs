@@ -38,6 +38,7 @@ namespace MaximovInk.VoxelEngine
             if (targetChunk == null)
             {
                 targetChunk = this;
+                return;
             }
 
             if (right)
@@ -75,10 +76,7 @@ namespace MaximovInk.VoxelEngine
                 var offset = offsets[i];
 
                 var pos = new int3(x + offset.x, y + offset.y, z + offset.z);
-                var index = VoxelUtility.PosToIndexInt(pos);
                 targetChunk = this;
-
-                Profiler.BeginSample("GetChunk");
 
                 var right = pos.x >= ChunkSize.x;
                 var top = pos.y >= ChunkSize.y;
@@ -89,7 +87,7 @@ namespace MaximovInk.VoxelEngine
                 if(overflow)
                     GetChunkOverflowCheck(right, top, forward, ref pos);
 
-                Profiler.EndSample();
+                var index = VoxelUtility.PosToIndexInt(pos);
 
                 float value;
                 if ((overflow && targetChunk == this) || targetChunk._data.Blocks[index] == 0)
@@ -108,10 +106,9 @@ namespace MaximovInk.VoxelEngine
             return cubeIndex;
         }
 
-
         private void MeshingThread()
         {
-            Profiler.BeginSample("Meshing");
+           // Profiler.BeginSample("Meshing");
 
             _meshData.Clear();
 
@@ -125,26 +122,17 @@ namespace MaximovInk.VoxelEngine
                 var pos = VoxelUtility.IndexToPos(index);
                 var posFloat = pos * BlockSize;
 
-                Profiler.BeginSample("GetConfiguration");
                 var cubeIndex = GetConfiguration(pos.x, pos.y, pos.z);
-
-                Profiler.EndSample();
 
                 if (cubeIndex is 0 or 255)
                 {
                     continue;
                 }
 
-                Profiler.BeginSample("edges var");
-
-
                 var edges = triTable[cubeIndex];
-                Profiler.EndSample();
 
                 for (var i = 0; edges[i] != -1 && i < 12; i += 3)
                 {
-                    Profiler.BeginSample("find edges");
-
                     var e00 = edgeConnections[edges[i]][0];
                     var e01 = edgeConnections[edges[i]][1];
 
@@ -163,48 +151,32 @@ namespace MaximovInk.VoxelEngine
                     var c = InterpolateEdges(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21],
                         cubeValues[e21]) * BlockSize + posFloat;
 
-                    Profiler.EndSample();
-
                     if (a.Equals(b) || a.Equals(c) || b.Equals(c)) continue;
 
                     var normal = math.normalize(math.cross(b - a, c - a));
 
                     if (smoothing)
                     {
-                        Profiler.BeginSample("smoothing");
                         if (smoothedVerticesCache.TryGetValue(c, out var pointC))
                         {
-                            Profiler.BeginSample("getc");
-
                             _meshData.Triangles.Add(pointC); 
-                            
-                            Profiler.EndSample();
                         }
                         else
                         {
-                            Profiler.BeginSample("addc");
-
                             var idx = smoothedVerticesCache.Count;
                             smoothedVerticesCache[c] = idx;
                             _meshData.Normals.Add(normal);
                             _meshData.Vertices.Add(c);
 
                             _meshData.Triangles.Add(idx);
-                            
-                            Profiler.EndSample();
                         }
 
                         if (smoothedVerticesCache.TryGetValue(a, out var pointA))
                         {
-                            Profiler.BeginSample("geta");
-
                             _meshData.Triangles.Add(pointA);
-                            
-                            Profiler.EndSample();
                         }
                         else
                         {
-                            Profiler.BeginSample("adda");
 
                             var idx = smoothedVerticesCache.Count;
                             smoothedVerticesCache[a] = idx;
@@ -213,36 +185,25 @@ namespace MaximovInk.VoxelEngine
 
                             _meshData.Triangles.Add(idx); 
                             
-                            Profiler.EndSample();
                         }
 
                         if (smoothedVerticesCache.TryGetValue(b, out var pointB))
                         {
-                            Profiler.BeginSample("getb");
-
                             _meshData.Triangles.Add(pointB);
-                            
-                            Profiler.EndSample();
                         }
                         else
                         {
-                            Profiler.BeginSample("addb");
-
                             var idx = smoothedVerticesCache.Count;
                             smoothedVerticesCache[b] = idx;
                             _meshData.Normals.Add(normal);
                             _meshData.Vertices.Add(b);
 
                             _meshData.Triangles.Add(idx);
-                            
-                            Profiler.EndSample();
                         }
 
-                        Profiler.EndSample();
                     }
                     else
                     {
-                        Profiler.BeginSample("flat");
                         _meshData.Triangles.Add(_meshData.Vertices.Count);
                         _meshData.Triangles.Add(_meshData.Vertices.Count + 1);
                         _meshData.Triangles.Add(_meshData.Vertices.Count + 2);
@@ -255,28 +216,27 @@ namespace MaximovInk.VoxelEngine
                         _meshData.Normals.Add(normal);
                         _meshData.Normals.Add(normal);
 
-                        Profiler.EndSample();
                     }
                 }
             }
 
             _invokeApplyMesh = true;
 
-            Profiler.EndSample();
+           // Profiler.EndSample();
         }
 
         private void Generate()
         {
-            var timer = new Stopwatch();
-            timer.Start();
+           // var timer = new Stopwatch();
+           // timer.Start();
 
             MeshingThread();
 
-            timer.Stop();
+          //  timer.Stop();
 
-            TimeSpan timeTaken = timer.Elapsed;
+           // TimeSpan timeTaken = timer.Elapsed;
 
-            Debug.Log($"{Position} " + timeTaken.TotalMilliseconds);
+           // Debug.Log($"{Position} " + timeTaken.TotalMilliseconds);
         }
 
         private static readonly int3[] offsets = new int3[]

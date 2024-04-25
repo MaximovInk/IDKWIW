@@ -68,7 +68,7 @@ namespace MaximovInk.VoxelEngine
                 Profiler.EndSample();
 
 
-                EditorApplication.isPaused = true;
+                //EditorApplication.isPaused = true;
             }
         }
 
