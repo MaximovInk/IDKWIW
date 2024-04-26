@@ -191,6 +191,8 @@ namespace MaximovInk.IDKWIW
             }
 
             _crouchPrev = IsCrouch;
+
+            ApplyLook();
         }
 
         protected virtual void FixedUpdate()
@@ -219,7 +221,7 @@ namespace MaximovInk.IDKWIW
         {
             if (!IsOwner || !Components.IsInitialized) return;
 
-            ApplyLook();
+           
 
             Components.Animator.UpdateAnimation();
         }

@@ -40,13 +40,13 @@ namespace MaximovInk.IDKWIW
             if (Cursor.lockState == CursorLockMode.None)
                 input.LookValue = Vector2.zero;
             else
-                input.LookValue = new Vector2(Input.GetAxis("Mouse X") * _mouseSens.x * Time.deltaTime * 100f, -Input.GetAxis("Mouse Y") * _mouseSens.y * Time.deltaTime * 100f);
+                input.LookValue = new Vector2(Input.GetAxisRaw("Mouse X") * _mouseSens.x, -Input.GetAxisRaw("Mouse Y") * _mouseSens.y);
 
             input.LookAround = Input.GetKey(KeyCode.LeftAlt);
 
             input.InvokeChangeCamera = Input.GetKeyDown(KeyCode.C);
 
-            input.ScrollDelta -= Input.mouseScrollDelta.y * Time.deltaTime * 70f;
+            input.ScrollDelta -= Input.mouseScrollDelta.y;
 
             input.IsAiming = Input.GetMouseButton(1);
             input.IsFire = Input.GetMouseButton(0);

@@ -112,8 +112,8 @@ namespace MaximovInk.VoxelEngine
 
 
                 Profiler.BeginSample("Recalculate normals");
-                if (!Terrain.FlatShading)
-                    _mesh.RecalculateNormals(180, 0.5f);
+               // if (!Terrain.FlatShading)
+                    //_mesh.RecalculateNormals(180, 0.5f);
                 Profiler.EndSample();
 
                 if (_mesh.vertexCount == 0)

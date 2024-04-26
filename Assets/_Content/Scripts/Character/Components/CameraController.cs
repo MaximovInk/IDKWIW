@@ -47,11 +47,11 @@ namespace MaximovInk.IDKWIW
             if (currentInput.InvokeChangeCamera)
                 Toggle();
 
-            _cameraYaw += currentInput.LookValue.y;
+            _cameraYaw += currentInput.LookValue.y ;
             _cameraYaw = Mathf.Clamp(_cameraYaw, -MaxAngle, MaxAngle);
 
             if(currentInput.LookAround)
-                _offsetPitch += currentInput.LookValue.x;
+                _offsetPitch += currentInput.LookValue.x ;
             else if (_offsetPitch != 0)
             {
                 _cameraPitch -= _offsetPitch;
@@ -59,7 +59,7 @@ namespace MaximovInk.IDKWIW
             }
 
 
-            _cameraPitch += currentInput.LookValue.x;
+            _cameraPitch += currentInput.LookValue.x ;
 
             if (!IsFirstPerson)
             {

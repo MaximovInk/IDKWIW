@@ -69,9 +69,6 @@ namespace MaximovInk.VoxelEngine
                 if (_chunks[i].LOD != lod)
                 {
                     _chunks[i].LOD = lod;
-
-                    Debug.Log("Update");
-
                     _timer = _delay / 1.2f;
 
                     return;
