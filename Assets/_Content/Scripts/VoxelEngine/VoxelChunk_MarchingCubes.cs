@@ -71,7 +71,7 @@ namespace MaximovInk.VoxelEngine
             return edgeVertex1 + (_isoLevel - valueAtVertex1) / (atVertex1) * (edgeVertex2 - edgeVertex1);
         }
 
-        private int GetConfiguration(int x, int y, int z, int lod)
+        private int GetConfiguration(int currentIndex, int x, int y, int z, int lod)
         {
             var cubeIndex = 0;
 
@@ -94,10 +94,20 @@ namespace MaximovInk.VoxelEngine
                 var index = VoxelUtility.PosToIndexInt(pos);
 
                 float value;
-                if ((overflow && targetChunk == this) || targetChunk._data.Blocks[index] == 0)
+
+                if (overflow && targetChunk == this)
+                {
+                    if (_data.Value[currentIndex] > _isoLevel)
+                        value = _data.Value[currentIndex]/2f;
+                    else
+                        value = 0f;
+                }
+                else if (targetChunk._data.Blocks[index] == 0)
                     value = 0f;
                 else
                     value = targetChunk._data.Value[index];
+
+                value /= lod;
 
                 cubeValues[i] = value / 255f;
 
@@ -117,11 +127,14 @@ namespace MaximovInk.VoxelEngine
             var smoothing = !Terrain.FlatShading;
 
             ValidateLodValue();
-            var lod = 1;
+            var lod = _lod;
 
             var blockSize = BlockSize * lod;
 
             var chunkSize = ChunkSize;
+
+            _isEmpty = true;
+            _isFull = true;
 
             for (int ix = 0; ix < chunkSize.x; ix+= lod)
             {
@@ -132,12 +145,25 @@ namespace MaximovInk.VoxelEngine
                         var pos = new int3(ix, iy, iz);
                         var index = VoxelUtility.PosToIndexInt(pos);
 
+
+                        if (_data.Blocks[index] > 0)
+                        {
+                            _isEmpty = false;
+                        }
+                        else
+                        {
+                            _isFull = false;
+                        }
+
+                       
+                       
+
                         //var pos = VoxelUtility.IndexToPos(index);
                         var posFloat = pos * BlockSize;
 
                         //if (((int)(pos.x / lod + pos.y / lod + pos.z / lod)) % lod != 0) continue;
 
-                        var cubeIndex = GetConfiguration(pos.x, pos.y, pos.z, lod);
+                        var cubeIndex = GetConfiguration(index,pos.x, pos.y, pos.z, lod);
 
                         if (cubeIndex is 0 or 255)
                         {
@@ -169,6 +195,27 @@ namespace MaximovInk.VoxelEngine
 
                             var c = InterpolateEdges(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21],
                                 cubeValues[e21]) * blockSize + posFloat;
+
+                            if (lod == 2)
+                            {
+                                a.y += 3.1f;
+                                b.y += 3.1f;
+                                c.y += 3.1f;
+                            }
+
+                            if (lod == 4)
+                            {
+                                a.y += 8.97f;
+                                b.y += 8.97f;
+                                c.y += 8.97f;
+                            }
+
+                            if (lod == 8)
+                            {
+                                a.y += 12.5f;
+                                b.y += 12.5f;
+                                c.y += 12.5f;
+                            }
 
                             if (a.Equals(b) || a.Equals(c) || b.Equals(c)) continue;
 

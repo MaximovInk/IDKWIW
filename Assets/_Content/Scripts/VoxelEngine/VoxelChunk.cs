@@ -38,6 +38,9 @@ namespace MaximovInk.VoxelEngine
         [SerializeField]
         private int _lod;
 
+
+        public bool IsFree = true;
+
         #region UnityMessages
 
         private void Update()
@@ -89,7 +92,6 @@ namespace MaximovInk.VoxelEngine
             }
         }
 
-
         private void OnDestroy()
         {
             _isDestroyed = true;
@@ -112,7 +114,11 @@ namespace MaximovInk.VoxelEngine
             InitializeRenderer();
             LOD = 1;
 
+            IsFree = true;
+
             UpdatePosition();
+
+            _isEmpty = true;
         }
 
         public void UpdateImmediately()
@@ -140,6 +146,21 @@ namespace MaximovInk.VoxelEngine
         #endregion
 
         #region Data
+
+        [SerializeField]
+        private bool _isEmpty = false;
+        [SerializeField]
+        private bool _isFull = false;
+
+        public bool IsFull()
+        {
+            return _isFull;
+        }
+
+        public bool IsEmpty()
+        {
+            return _isEmpty;
+        }
 
         public int ValidateLodValue(int value)
         {

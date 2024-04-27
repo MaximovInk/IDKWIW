@@ -20,6 +20,8 @@ namespace MaximovInk.VoxelEngine
 
         public bool FlatShading;
 
+        public Dictionary<int3, VoxelChunk> ChunksCache=>_chunksCache;
+
         private int3 _chunkCachedPos = new(int.MaxValue, int.MaxValue, int.MaxValue);
         private VoxelChunk _chunkLastUsed;
 
@@ -28,6 +30,17 @@ namespace MaximovInk.VoxelEngine
         [SerializeField]
         private Material _material;
 
+        [SerializeField]
+        private int _allocateChunkCount;
+
+        private void Awake()
+        {
+            for (int i = 0; i < _allocateChunkCount; i++)
+            {
+                AllocateChunk(new int3(i, 0, 0));
+            }
+
+        }
 
         public void UpdateImmediately()
         {
@@ -79,6 +92,23 @@ namespace MaximovInk.VoxelEngine
             _chunksCache[position] = chunk;
 
             OnChunkLoaded?.Invoke(chunk);
+
+            for (int ix = -1; ix <= 0; ix++)
+            {
+                for (int iy = -1; iy <= 0; iy++)
+                {
+                    for (int iz = -1; iz <= 0; iz++)
+                    {
+                        if(ix == 0 && iy == 0 && iz == 0)continue;
+
+                        var ch = GetChunkByPos(position + new int3(ix,iy,iz),false);
+
+                        if(ch == null) continue;
+
+                        ch.SetIsDirty();
+                    }
+                }   
+            }
 
             return true;
         }
@@ -137,8 +167,6 @@ namespace MaximovInk.VoxelEngine
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public VoxelChunk AllocateChunk(int3 chunkPos)
         {
-            Debug.Log("Allocate");
-
             var go = new GameObject($"CHUNK");
             go.transform.SetParent(transform);
             go.transform.SetLocalPositionAndRotation(

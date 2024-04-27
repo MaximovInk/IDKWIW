@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
@@ -25,9 +26,6 @@ namespace MaximovInk.VoxelEngine
 
         private VoxelTerrain _terrain;
 
-        [Range(0, 10)]
-        [SerializeField] private float _lodMultiplier = 1f;
-
 
         [SerializeField] private float _delay;
         private float _timer;
@@ -43,6 +41,11 @@ namespace MaximovInk.VoxelEngine
         private void Awake()
         {
             _terrain = GetComponent<VoxelTerrain>();
+        }
+
+        private void Start()
+        {
+            _chunks = _terrain.ChunksCache.Values.ToArray();
         }
 
         private void Update()
@@ -63,11 +66,16 @@ namespace MaximovInk.VoxelEngine
 
         private VoxelChunk[] _chunks;
 
-        private void ValidateChunksArray()
+        /*
+         private void ValidateChunksArray()
         {
             if (_chunks == null || _chunks.Length != transform.childCount)
                 _chunks = GetComponentsInChildren<VoxelChunk>();
         }
+
+         */
+
+
 
         private void SortChunksByLod()
         {
@@ -86,7 +94,11 @@ namespace MaximovInk.VoxelEngine
 
         private bool UpdateChunkLOD(VoxelChunk chunk, Vector3 targetPos, float lodStep)
         {
-            var distance = Vector3.Distance(targetPos, chunk.transform.position) / (lodStep * _lodMultiplier);
+            var player = new float2(targetPos.x, targetPos.z);
+
+            var chunkPosD = new float2(chunk.transform.position.x, chunk.transform.position.z);
+
+            var distance = math.distance(player, chunkPosD) / lodStep;
 
             int lod = 1;
 
@@ -114,8 +126,6 @@ namespace MaximovInk.VoxelEngine
 
         private void UpdateChunksLOD()
         {
-            ValidateChunksArray();
-
             if (_chunks == null || _chunks.Length == 0) return;
 
             SortChunksByLod();
@@ -133,44 +143,34 @@ namespace MaximovInk.VoxelEngine
 
                 var changed = UpdateChunkLOD(chunk, targetPos, lodStep);
 
-                
-                 if (chunk.LOD >= _lodFreeChunk)
+                if (chunk.LOD >= _lodFreeChunk)
                 {
                     _freeChunks.Push(chunk);
+                    chunk.IsFree = false;
                 }
-                 
 
                 if (changed) return;
             }
         }
 
-        [SerializeField] private int3 posDebug;
-        [SerializeField] private int freeChunksDebug;
-
 
         private void UpdateChunksPositions()
         {
-            freeChunksDebug = _freeChunks.Count;
-
             if(_freeChunks.Count == 0) return;
 
             var xSize = Mathf.CeilToInt(_chunkAroundUpdate.x / 2f);
-            var ySize = Mathf.CeilToInt(_chunkAroundUpdate.y / 2f);
+            var ySize = _chunkAroundUpdate.y;
             var zSize = Mathf.CeilToInt(_chunkAroundUpdate.z / 2f);
 
             var xMin = _chunkAroundUpdate.x - xSize;
-            var yMin = _chunkAroundUpdate.y - ySize;
+            //var yMin = _chunkAroundUpdate.y - ySize;
             var zMin = _chunkAroundUpdate.z - zSize;
 
             var origin = _terrain.WorldToChunkPosition(_target.position);
 
-            posDebug = origin;
-
-            
-
             for (int ix = -xMin; ix <= xSize; ix++)
             {
-                for (int iy = -yMin; iy <= ySize; iy++)
+                for (int iy = -1; iy <= ySize; iy++)
                 {
                     for (int iz = -zMin; iz <= zSize; iz++)
                     {
@@ -184,21 +184,18 @@ namespace MaximovInk.VoxelEngine
 
                         if (chunk == null) return;
 
+                        chunk.IsFree = true;
+
                         var gettedChunk = _terrain.UnloadChunk(chunk.Position);
 
                         if (gettedChunk != chunk)
                         {
-                            Debug.Log("&&");
                             continue;
                         }
 
                         gettedChunk.Position = currentPos;
 
                         _terrain.LoadChunk(currentPos, gettedChunk);
-
-                        //gettedChunk.SetIsDirty();
-
-
                     }
                 }
             }

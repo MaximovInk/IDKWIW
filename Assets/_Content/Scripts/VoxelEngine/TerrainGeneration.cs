@@ -52,8 +52,6 @@ namespace MaximovInk.VoxelEngine
 
         public bool FlatShading;
 
-        [SerializeField]
-        private int _allocateChunkCount;
 
         private void OnValidate()
         {
@@ -67,26 +65,6 @@ namespace MaximovInk.VoxelEngine
             _terrain.OnChunkLoaded += Generate;
 
             _noise = new OpenSimplexNoise((long)(_seed));
-
-            for (int i = 0; i < _allocateChunkCount; i++)
-            {
-               var chunk = _terrain.AllocateChunk(new int3(i, 0, 0));
-
-                Generate(chunk);
-            }
-
-            /*
-              for (int a = 0; a < 5; a++)
-             {
-                 for (int i = 0; i < 10; i++)
-                 {
-                     for (int j = 0; j < 20; j++)
-                     {
-                         _terrain.SetBlock("Grass", new int3(a, i, j));
-                     }
-                 }
-             }
-             */
         }
 
         public float GetHeight(float x, float y)
