@@ -5833,7 +5833,7 @@ Transform:
   m_GameObject: {fileID: 1159980591}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -33.55, y: -0.98, z: 18.24}
+  m_LocalPosition: {x: 0, y: 17.62, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7246,7 +7246,7 @@ GameObject:
   - component: {fileID: 1472512349}
   - component: {fileID: 1472512348}
   - component: {fileID: 1472512350}
-  - component: {fileID: 1472512351}
+  - component: {fileID: 1472512352}
   m_Layer: 0
   m_Name: VoxelEngine
   m_TagString: Untagged
@@ -7271,9 +7271,9 @@ MonoBehaviour:
     y: 16
     z: 16
   BlockSize:
-    x: 1
-    y: 1
-    z: 1
+    x: 2
+    y: 2
+    z: 2
   IsoLevel: 25
   FlatShading: 1
   _material: {fileID: 2100000, guid: aad58c289d9dc6547813f08d3b5b17cf, type: 2}
@@ -7306,7 +7306,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _noiseGenerators:
   - Value: 1
-    Scale: {x: 100, y: 100}
+    Scale: {x: 200, y: 200}
     Offset: {x: 750, y: 0}
   _biomes:
   - BlockID: Rock
@@ -7316,13 +7316,12 @@ MonoBehaviour:
   - BlockID: Sand
     FromHeight: 0
   _amplitude: 40
-  Size: {x: 132, y: 132}
   _seed: 318
   _genDelay: 0.2
   _minY: 3
-  _centred: 1
   FlatShading: 0
---- !u!114 &1472512351
+  _allocateChunkCount: 16
+--- !u!114 &1472512352
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -7337,6 +7336,27 @@ MonoBehaviour:
   _target: {fileID: 1159980592}
   _lodMultiplier: 1
   _delay: 0.05
+  LODs:
+  - LOD: 16
+    DistanceInChunks: 25
+  - LOD: 8
+    DistanceInChunks: 20
+  - LOD: 4
+    DistanceInChunks: 10
+  - LOD: 4
+    DistanceInChunks: 4
+  - LOD: 2
+    DistanceInChunks: 3
+  _lodFreeChunk: 4
+  _chunkAroundUpdate:
+    x: 3
+    y: 1
+    z: 3
+  posDebug:
+    x: 0
+    y: 0
+    z: 0
+  freeChunksDebug: 0
 --- !u!1 &1484472641
 GameObject:
   m_ObjectHideFlags: 0

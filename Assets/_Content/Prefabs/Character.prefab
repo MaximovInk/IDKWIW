@@ -849,11 +849,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8c870d7c4b72734f83f17532f1ea823, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _speed: 4
+  _speed: 10
   _sprintMultiplier: 1.5
   _crouchMultiplier: 0.7
   _entityHeight: 2.1
-  _jumpHeight: 2.5
+  _jumpHeight: 3.5
   _airDrag: 0
   _groundDrag: 3
   _crouchScaleMultiplier: 0.7

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
@@ -7,6 +8,8 @@ namespace MaximovInk.VoxelEngine
 {
     public class VoxelTerrain : MonoBehaviour
     {
+        public event Action<VoxelChunk> OnChunkPushed;
+
         public int3 ChunkSize;
         public float3 BlockSize;
 
@@ -35,6 +38,47 @@ namespace MaximovInk.VoxelEngine
         }
 
         #region ChunkManipulation
+
+        private void ClearLastCacheUsed()
+        {
+            _chunkLastUsed = null;
+            _chunkCachedPos = new(int.MaxValue, int.MaxValue, int.MaxValue);
+        }
+
+        public VoxelChunk PopChunk(int3 position)
+        {
+            _chunksCache.TryGetValue(position, out var chunk);
+
+            if (chunk == null)
+                return null;
+
+            ClearLastCacheUsed();
+
+            _chunksCache.Remove(position);
+            
+            return chunk;
+        }
+
+        public bool PushChunk(int3 position, VoxelChunk chunk)
+        {
+            if (chunk == null) return false;
+
+            var hasChunk = _chunksCache.TryGetValue(position, out _);
+
+            if (hasChunk) return false;
+
+            ClearLastCacheUsed();
+
+            chunk.Position = position;
+            chunk.UpdatePosition();
+            chunk.Clear();
+
+            _chunksCache[position] = chunk;
+
+            OnChunkPushed?.Invoke(chunk);
+
+            return true;
+        }
 
         private void BuildChunkCache()
         {
@@ -88,8 +132,10 @@ namespace MaximovInk.VoxelEngine
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private VoxelChunk AllocateChunk(int3 chunkPos)
+        public VoxelChunk AllocateChunk(int3 chunkPos)
         {
+            Debug.Log("Allocate");
+
             var go = new GameObject($"[Instance] Chunk {chunkPos}");
             go.transform.SetParent(transform);
             go.transform.SetLocalPositionAndRotation(
@@ -110,6 +156,11 @@ namespace MaximovInk.VoxelEngine
         #endregion
 
         #region Data
+
+        public int GetBlockID(string blockID)
+        {
+            return VoxelDatabase.GetID(blockID);
+        }
 
         public bool SetBlock(string blockID, int3 position)
         {
@@ -144,7 +195,7 @@ namespace MaximovInk.VoxelEngine
         #region PositionConvertation
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private int3 PositionToChunk(int3 globalGridPos)
+        public int3 PositionToChunk(int3 globalGridPos)
         {
             var xInvert = globalGridPos.x < 0;
             var yInvert = globalGridPos.y < 0;
@@ -183,6 +234,24 @@ namespace MaximovInk.VoxelEngine
                 Mathf.FloorToInt((localPos.x) / BlockSize.x),
                 Mathf.FloorToInt((localPos.y) / BlockSize.y),
                 Mathf.FloorToInt((localPos.z) / BlockSize.z));
+        }
+
+        private int3 LocalToChunk(Vector3 localPos)
+        {
+            var chunkSize = ChunkSize * BlockSize;
+
+            return new int3(
+                Mathf.FloorToInt(localPos.x / chunkSize.x), 
+                Mathf.FloorToInt(localPos.y / chunkSize.y),
+                Mathf.FloorToInt(localPos.z / chunkSize.z)
+                );
+        }
+
+        public int3 WorldToChunkPosition(Vector3 worldPos)
+        {
+            var localPos = transform.InverseTransformPoint(worldPos);
+            
+            return LocalToChunk(localPos);
         }
 
         #endregion

@@ -23,8 +23,6 @@ namespace MaximovInk.VoxelEngine
 
         private void InitializeRenderer()
         {
-            smoothedVerticesCache = new Dictionary<Vector3, int>(ChunkSize.x * ChunkSize.y * ChunkSize.z * 16);
-            
             _meshRenderer = GetComponent<MeshRenderer>();
             _meshFilter = GetComponent<MeshFilter>();
 

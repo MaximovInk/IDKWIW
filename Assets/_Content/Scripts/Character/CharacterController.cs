@@ -1,4 +1,5 @@
 using System;
+using MaximovInk.VoxelEngine;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -91,6 +92,12 @@ namespace MaximovInk.IDKWIW
             OnGroundChangedEvent += OnGroundChanged;
 
             GetComponent<AudioListener>().enabled=IsOwner;
+
+            if (IsOwner)
+            {
+                FindObjectOfType<ChunksLoader>().Target = transform;
+
+            }
         }
 
 

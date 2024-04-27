@@ -48,7 +48,7 @@ MonoBehaviour:
   m_Name: FullScreenFogRendererFeature
   m_EditorClassIdentifier: 
   m_Active: 0
-  _injectionPoint: 550
+  _injectionPoint: 450
   _renderCamera: 1
   _shader: {fileID: -6465566751694194690, guid: a1b07ed697d67f145899e797afa7e6d3,
     type: 3}
@@ -71,7 +71,8 @@ MonoBehaviour:
   m_RendererFeatures:
   - {fileID: -1878332245247344467}
   - {fileID: -902477072250052564}
-  m_RendererFeatureMap: adc0de57c6d2eee52ce09962e2c179f3
+  - {fileID: 6967840948287629754}
+  m_RendererFeatureMap: adc0de57c6d2eee52ce09962e2c179f3bae91ade6cbeb260
   m_UseNativeRenderPass: 0
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   xrSystemData: {fileID: 11400000, guid: 60e1133243b97e347b653163a8c01b64, type: 2}
@@ -114,3 +115,30 @@ MonoBehaviour:
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
+--- !u!114 &6967840948287629754
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 836fba37e8552f541abf20055e192196, type: 3}
+  m_Name: AtmosphericFogRenderFeature
+  m_EditorClassIdentifier: 
+  m_Active: 1
+  settings:
+    color: {r: 0.21960786, g: 0.6666667, b: 0.8117648, a: 0.89411765}
+    sunColor: {r: 0.990566, g: 0.8900347, b: 0.61209506, a: 1}
+    fogDensity: 0.01
+    fogDensityPower: 6.1
+    skyAlpha: 0.5
+    useHeightFog: 0
+    fogHeightStart: 0
+    fogHeightEnd: 30
+    fogHeightPower: 0.5
+    extraFogHeightEnd: 0
+    extraFogHeightPower: 2
+    directionalIntesity: 0.49
+    directionalPower: 1

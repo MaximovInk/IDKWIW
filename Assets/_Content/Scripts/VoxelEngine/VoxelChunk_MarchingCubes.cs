@@ -263,12 +263,10 @@ namespace MaximovInk.VoxelEngine
             }
 
             _meshData.Clear();
-
             smoothedVerticesCache.Clear();
 
            
             _isoLevel = Terrain.IsoLevel / 255f;
-
             _currentThread = new Thread(MeshingThread);
 
             MeshingThread();
@@ -287,7 +285,6 @@ namespace MaximovInk.VoxelEngine
         new(1,1,0),
         new(0,1,0),
    };
-
         private static readonly float3[] cornerOffsets = {
         new(0, 0, 1), // v0
         new(1, 0, 1), // v1
@@ -298,13 +295,11 @@ namespace MaximovInk.VoxelEngine
         new(1, 1, 0), // v6
         new(0, 1, 0)  // v7
     };
-
         private static readonly int[][] edgeConnections = {
         new[] {0,1}, new[] {1,2}, new[] {2,3}, new[] {3,0},
         new[] {4,5}, new[] {5,6}, new[] {6,7}, new[] {7,4},
         new[] {0,4}, new[] {1,5}, new[] {2,6}, new[] {3,7}
     };
-
         private static readonly int[][] triTable = {
         new[] {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
         new[] {0, 8, 3, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
@@ -563,5 +558,34 @@ namespace MaximovInk.VoxelEngine
         new[] {0, 3, 8, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1},
         new[] {-1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1}
     };
+
+        private void CacheNeighbors()
+        {
+            Profiler.BeginSample("Neighbors");
+
+            Vector3Int pos = new Vector3Int(Position.x, Position.y, Position.z);
+
+                _neighbors.Forward = Terrain.GetChunkByPos(pos + Vector3Int.forward, false);
+
+                _neighbors.Top = Terrain.GetChunkByPos(pos + Vector3Int.up, false);
+
+                _neighbors.Right = Terrain.GetChunkByPos(pos + Vector3Int.right, false);
+
+                _neighbors.ForwardTop = Terrain.GetChunkByPos(pos + Vector3Int.forward + Vector3Int.up, false);
+
+                _neighbors.ForwardRight = Terrain.GetChunkByPos(pos + Vector3Int.forward + Vector3Int.right, false);
+
+                _neighbors.TopRight = Terrain.GetChunkByPos(pos + Vector3Int.up + Vector3Int.right, false);
+
+                _neighbors.ForwardTopRight =
+                    Terrain.GetChunkByPos(pos + Vector3Int.forward + Vector3Int.up + Vector3Int.right, false);
+             
+            Profiler.EndSample();
+        }
+
+        private void InitializeMarchingCubes()
+        {
+            smoothedVerticesCache = new Dictionary<Vector3, int>(ChunkSize.x * ChunkSize.y * ChunkSize.z * 16);
+        }
     }
 }

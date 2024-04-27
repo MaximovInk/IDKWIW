@@ -1,9 +1,6 @@
-﻿using System.Collections.Generic;
-using Unity.Mathematics;
-using UnityEditor;
+﻿using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
-using static UnityEditor.PlayerSettings;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -43,42 +40,6 @@ namespace MaximovInk.VoxelEngine
 
         #region UnityMessages
 
-        public int ValidateLodValue(int value)
-        {
-            var limit = Mathf.Min(ChunkSize.x, ChunkSize.z, ChunkSize.y);
-
-            if (value <= 1)
-            {
-                value = 1;
-                return value;
-            }
-
-            if (value > limit)
-            {
-                value = limit;
-                return value;
-            }
-
-            if (value is 16 or 8 or 4 or 2)
-                return value;
-
-            if (value > 16)
-                value = 16;
-            else if (value > 8)
-                value = 8;
-            else if (value > 4)
-                value = 4;
-            else
-                value = 2;
-
-            return value;
-        }
-
-        private void ValidateLodValue()
-        {
-            _lod = ValidateLodValue(_lod);
-        }
-
         private void Update()
         {
             if (_isDestroyed)
@@ -88,11 +49,7 @@ namespace MaximovInk.VoxelEngine
             {
                 CacheNeighbors();
 
-                transform.localPosition = new Vector3(
-                    Position.x * ChunkSize.x * BlockSize.x,
-                    Position.y * ChunkSize.y * BlockSize.y,
-                    Position.z * ChunkSize.z * BlockSize.z
-                );
+                UpdatePosition();
 
                 _isDirty = false;
                 
@@ -146,8 +103,12 @@ namespace MaximovInk.VoxelEngine
 
             _data = new ChunkData(ChunkSize.x, ChunkSize.y, ChunkSize.z);
 
+            InitializeMarchingCubes();
+
             InitializeRenderer();
-            LOD = 1;
+            LOD = 2;
+
+            UpdatePosition();
         }
 
         public void UpdateImmediately()
@@ -156,9 +117,59 @@ namespace MaximovInk.VoxelEngine
             Update();
         }
 
+        public void UpdatePosition()
+        {
+            transform.localPosition = new Vector3(
+                Position.x * ChunkSize.x * BlockSize.x,
+                Position.y * ChunkSize.y * BlockSize.y,
+                Position.z * ChunkSize.z * BlockSize.z
+            );
+        }
+
+        public void SetIsDirty()
+        {
+            _isDirty = true;
+        }
+
         #endregion
 
         #region Data
+
+        public int ValidateLodValue(int value)
+        {
+            var limit = Mathf.Min(ChunkSize.x, ChunkSize.z, ChunkSize.y);
+
+            if (value <= 1)
+            {
+                value = 1;
+                return value;
+            }
+
+            if (value > limit)
+            {
+                value = limit;
+                return value;
+            }
+
+            if (value is 16 or 8 or 4 or 2)
+                return value;
+
+            if (value > 16)
+                value = 16;
+            else if (value > 8)
+                value = 8;
+            else if (value > 4)
+                value = 4;
+            else
+                value = 2;
+
+            return value;
+        }
+
+        private void ValidateLodValue()
+        {
+            _lod = ValidateLodValue(_lod);
+        }
 
         public void Clear()
         {
@@ -219,37 +230,6 @@ namespace MaximovInk.VoxelEngine
             _isDirty = true;
 
             return true;
-        }
-
-        private void CacheNeighbors()
-        {
-            Profiler.BeginSample("Neighbors");
-
-            Vector3Int pos = new Vector3Int(Position.x, Position.y, Position.z);
-
-            if (_neighbors.Forward == null)
-                _neighbors.Forward = Terrain.GetChunkByPos(pos + Vector3Int.forward, false);
-
-            if (_neighbors.Top == null)
-                _neighbors.Top = Terrain.GetChunkByPos(pos + Vector3Int.up, false);
-
-            if (_neighbors.Right == null)
-                _neighbors.Right = Terrain.GetChunkByPos(pos + Vector3Int.right, false);
-
-            if (_neighbors.ForwardTop == null)
-                _neighbors.ForwardTop = Terrain.GetChunkByPos(pos + Vector3Int.forward + Vector3Int.up, false);
-
-            if (_neighbors.ForwardRight == null)
-                _neighbors.ForwardRight = Terrain.GetChunkByPos(pos + Vector3Int.forward + Vector3Int.right, false);
-
-            if (_neighbors.TopRight == null)
-                _neighbors.TopRight = Terrain.GetChunkByPos(pos + Vector3Int.up + Vector3Int.right, false);
-
-            if (_neighbors.ForwardTopRight == null)
-                _neighbors.ForwardTopRight =
-                    Terrain.GetChunkByPos(pos + Vector3Int.forward + Vector3Int.up + Vector3Int.right, false);
-
-            Profiler.EndSample();
         }
 
         #endregion
