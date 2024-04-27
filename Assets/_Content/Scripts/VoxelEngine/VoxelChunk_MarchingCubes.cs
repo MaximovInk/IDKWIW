@@ -117,7 +117,7 @@ namespace MaximovInk.VoxelEngine
             var smoothing = !Terrain.FlatShading;
 
             ValidateLodValue();
-            var lod = _lod;
+            var lod = 1;
 
             var blockSize = BlockSize * lod;
 
@@ -265,6 +265,7 @@ namespace MaximovInk.VoxelEngine
             _meshData.Clear();
             smoothedVerticesCache.Clear();
 
+            _invokeApplyMesh = false;
            
             _isoLevel = Terrain.IsoLevel / 255f;
             _currentThread = new Thread(MeshingThread);

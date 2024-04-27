@@ -2,6 +2,7 @@
 using System.Linq;
 using Unity.Mathematics;
 using UnityEngine;
+using static UnityEngine.UI.Image;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -146,6 +147,7 @@ namespace MaximovInk.VoxelEngine
         [SerializeField] private int3 posDebug;
         [SerializeField] private int freeChunksDebug;
 
+
         private void UpdateChunksPositions()
         {
             freeChunksDebug = _freeChunks.Count;
@@ -164,6 +166,8 @@ namespace MaximovInk.VoxelEngine
 
             posDebug = origin;
 
+            
+
             for (int ix = -xMin; ix <= xSize; ix++)
             {
                 for (int iy = -yMin; iy <= ySize; iy++)
@@ -172,7 +176,7 @@ namespace MaximovInk.VoxelEngine
                     {
                         if (_freeChunks.Count == 0) return;
 
-                        var currentPos = origin + new int3(ix, 0, iz);
+                        var currentPos = origin + new int3(ix, iy, iz);
 
                         if(_terrain.GetChunkByPos(currentPos,false) != null) continue;
 
@@ -180,7 +184,7 @@ namespace MaximovInk.VoxelEngine
 
                         if (chunk == null) return;
 
-                        var gettedChunk = _terrain.PopChunk(chunk.Position);
+                        var gettedChunk = _terrain.UnloadChunk(chunk.Position);
 
                         if (gettedChunk != chunk)
                         {
@@ -190,7 +194,7 @@ namespace MaximovInk.VoxelEngine
 
                         gettedChunk.Position = currentPos;
 
-                        _terrain.PushChunk(currentPos, gettedChunk);
+                        _terrain.LoadChunk(currentPos, gettedChunk);
 
                         //gettedChunk.SetIsDirty();
 

@@ -45,6 +45,8 @@ namespace MaximovInk.VoxelEngine
             if (_isDestroyed)
                 return;
 
+            VoxelUtility.DrawChunkBounds(this);
+
             if (_isDirty)
             {
                 CacheNeighbors();
@@ -52,7 +54,7 @@ namespace MaximovInk.VoxelEngine
                 UpdatePosition();
 
                 _isDirty = false;
-                
+
 
                 Generate();
             }
@@ -81,10 +83,12 @@ namespace MaximovInk.VoxelEngine
                     _meshCollider.sharedMesh = _mesh;
                 Profiler.EndSample();
 
+                
 
                 //EditorApplication.isPaused = true;
             }
         }
+
 
         private void OnDestroy()
         {
@@ -106,7 +110,7 @@ namespace MaximovInk.VoxelEngine
             InitializeMarchingCubes();
 
             InitializeRenderer();
-            LOD = 2;
+            LOD = 1;
 
             UpdatePosition();
         }
@@ -124,6 +128,8 @@ namespace MaximovInk.VoxelEngine
                 Position.y * ChunkSize.y * BlockSize.y,
                 Position.z * ChunkSize.z * BlockSize.z
             );
+
+            gameObject.name = $"[Instance] Chunk {Position}";
         }
 
         public void SetIsDirty()
@@ -224,6 +230,7 @@ namespace MaximovInk.VoxelEngine
             var index = VoxelUtility.PosToIndexInt(position);
 
             if (_data.Blocks[index] == id) return false;
+
 
             _data.Blocks[index] = id;
 

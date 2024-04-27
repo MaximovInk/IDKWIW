@@ -8,7 +8,7 @@ namespace MaximovInk.VoxelEngine
 {
     public class VoxelTerrain : MonoBehaviour
     {
-        public event Action<VoxelChunk> OnChunkPushed;
+        public event Action<VoxelChunk> OnChunkLoaded;
 
         public int3 ChunkSize;
         public float3 BlockSize;
@@ -28,6 +28,7 @@ namespace MaximovInk.VoxelEngine
         [SerializeField]
         private Material _material;
 
+
         public void UpdateImmediately()
         {
             BuildChunkCache();
@@ -45,12 +46,14 @@ namespace MaximovInk.VoxelEngine
             _chunkCachedPos = new(int.MaxValue, int.MaxValue, int.MaxValue);
         }
 
-        public VoxelChunk PopChunk(int3 position)
+        public VoxelChunk UnloadChunk(int3 position)
         {
             _chunksCache.TryGetValue(position, out var chunk);
 
             if (chunk == null)
                 return null;
+
+            chunk.ClearMesh();
 
             ClearLastCacheUsed();
 
@@ -59,7 +62,7 @@ namespace MaximovInk.VoxelEngine
             return chunk;
         }
 
-        public bool PushChunk(int3 position, VoxelChunk chunk)
+        public bool LoadChunk(int3 position, VoxelChunk chunk)
         {
             if (chunk == null) return false;
 
@@ -75,7 +78,7 @@ namespace MaximovInk.VoxelEngine
 
             _chunksCache[position] = chunk;
 
-            OnChunkPushed?.Invoke(chunk);
+            OnChunkLoaded?.Invoke(chunk);
 
             return true;
         }
@@ -136,7 +139,7 @@ namespace MaximovInk.VoxelEngine
         {
             Debug.Log("Allocate");
 
-            var go = new GameObject($"[Instance] Chunk {chunkPos}");
+            var go = new GameObject($"CHUNK");
             go.transform.SetParent(transform);
             go.transform.SetLocalPositionAndRotation(
                 new Vector3(

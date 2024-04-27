@@ -9,11 +9,7 @@ public class TerrainGenerationEditor : Editor
 {
     public override void OnInspectorGUI()
     {
-        if (GUILayout.Button("Generate"))
-        {
-            (target as TerrainGeneration)?.Generate();
-        }
-
+       
         base.OnInspectorGUI();
 
     }

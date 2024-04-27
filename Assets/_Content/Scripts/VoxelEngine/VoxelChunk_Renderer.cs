@@ -1,12 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Profiling;
-using static UnityEngine.Mesh;
-using Debug = UnityEngine.Debug;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -20,6 +14,11 @@ namespace MaximovInk.VoxelEngine
         private Mesh _mesh;
 
         private MeshDataStruct _meshData;
+
+        public void ClearMesh()
+        {
+            _mesh.Clear();
+        }
 
         private void InitializeRenderer()
         {

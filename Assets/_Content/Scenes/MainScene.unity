@@ -319,7 +319,7 @@ Transform:
   m_GameObject: {fileID: 59832551}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -14.5, z: 0}
+  m_LocalPosition: {x: 0, y: -8.91, z: 0}
   m_LocalScale: {x: 100, y: 1, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5833,7 +5833,7 @@ Transform:
   m_GameObject: {fileID: 1159980591}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 17.62, z: 0}
+  m_LocalPosition: {x: 0, y: -20, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7246,7 +7246,7 @@ GameObject:
   - component: {fileID: 1472512349}
   - component: {fileID: 1472512348}
   - component: {fileID: 1472512350}
-  - component: {fileID: 1472512352}
+  - component: {fileID: 1472512351}
   m_Layer: 0
   m_Name: VoxelEngine
   m_TagString: Untagged
@@ -7286,7 +7286,7 @@ Transform:
   m_GameObject: {fileID: 1472512347}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -20, z: 0}
+  m_LocalPosition: {x: 0, y: -30, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -7320,8 +7320,8 @@ MonoBehaviour:
   _genDelay: 0.2
   _minY: 3
   FlatShading: 0
-  _allocateChunkCount: 16
---- !u!114 &1472512352
+  _allocateChunkCount: 64
+--- !u!114 &1472512351
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -7337,21 +7337,15 @@ MonoBehaviour:
   _lodMultiplier: 1
   _delay: 0.05
   LODs:
-  - LOD: 16
-    DistanceInChunks: 25
-  - LOD: 8
-    DistanceInChunks: 20
-  - LOD: 4
-    DistanceInChunks: 10
-  - LOD: 4
-    DistanceInChunks: 4
   - LOD: 2
-    DistanceInChunks: 3
-  _lodFreeChunk: 4
+    DistanceInChunks: 2
+  - LOD: 1
+    DistanceInChunks: 0
+  _lodFreeChunk: 2
   _chunkAroundUpdate:
-    x: 3
-    y: 1
-    z: 3
+    x: 2
+    y: 2
+    z: 2
   posDebug:
     x: 0
     y: 0

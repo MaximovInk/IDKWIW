@@ -3,8 +3,6 @@ using System.Linq;
 using NoiseTest;
 using Unity.Mathematics;
 using UnityEngine;
-using static Unity.Collections.AllocatorManager;
-using UnityEngine.UIElements;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -62,44 +60,33 @@ namespace MaximovInk.VoxelEngine
             _changed = true;
         }
 
-        private void Awake()
+        private void Start()
         {
             _terrain = GetComponent<VoxelTerrain>();
 
-            _terrain.OnChunkPushed += Generate;
-        }
+            _terrain.OnChunkLoaded += Generate;
 
-        private void _terrain_OnChunkPushed(VoxelChunk obj)
-        {
-            var chunkPos = obj.Position;
+            _noise = new OpenSimplexNoise((long)(_seed));
 
-            var chunkSize = _terrain.ChunkSize;
-
-
-
-            var min = new int2(chunkPos.x * chunkSize.x, chunkPos.z * chunkSize.z);
-
-            var max = new int2(min.x + chunkSize.x, min.y + chunkSize.z);
-
-            Debug.Log($"{chunkPos} {min}");
-
-            GenerateAt(min,max);
-        }
-
-        private void Update()
-        {
-            _timer += Time.deltaTime;
-
-            if (_changed && _timer > _genDelay)
+            for (int i = 0; i < _allocateChunkCount; i++)
             {
-                _terrain.FlatShading = FlatShading;
+               var chunk = _terrain.AllocateChunk(new int3(i, 0, 0));
 
-                _timer = 0f;
-
-                _changed = false;
-
-                Generate();
+                Generate(chunk);
             }
+
+            /*
+              for (int a = 0; a < 5; a++)
+             {
+                 for (int i = 0; i < 10; i++)
+                 {
+                     for (int j = 0; j < 20; j++)
+                     {
+                         _terrain.SetBlock("Grass", new int3(a, i, j));
+                     }
+                 }
+             }
+             */
         }
 
         public float GetHeight(float x, float y)
@@ -141,58 +128,25 @@ namespace MaximovInk.VoxelEngine
             return "Dirt";
         }
 
-        private void GenerateAt(int2 min, int2 max)
-        {
-
-
-
-
-
-            for (int ix = (int)(min.x); ix < max.x; ix++)
-            {
-                for (int iz = (int)(min.y); iz < max.y; iz++)
-                {
-                    var height = GetHeight(ix, iz);
-
-                    for (int iy = 0; iy < height; iy++)
-                    {
-                        var blockId = GetBlockId(iy);
-
-                        var pos = new int3(ix, iy, iz);
-
-                        _terrain.SetBlock(blockId, pos);
-
-                        var value = Mathf.Clamp01((height - iy) / (_amplitude + _minY + _terrain.IsoLevel));
-
-                        _terrain.SetValue((byte)(value * 255f), pos);
-                    }
-
-                }
-            }
-
-        }
-
         private void Generate(VoxelChunk chunk)
         {
             var chunkPos = chunk.Position;
 
             var chunkSize = _terrain.ChunkSize;
-
             var gridOrigin = chunkSize * chunkPos;
 
             for (int ix = 0; ix < _terrain.ChunkSize.x; ix++)
             {
                 for (int iz = 0; iz < _terrain.ChunkSize.z; iz++)
                 {
-                    var height = GetHeight(ix + gridOrigin.x, iz + gridOrigin.z) - chunkPos.y * _terrain.ChunkSize.y;
+                    var height = GetHeight(ix + gridOrigin.x, iz + gridOrigin.z) - gridOrigin.y;
+
 
                     if (height <= 0) continue;
 
-                    if(height >= _terrain.ChunkSize.y)continue;
-
-                    for (int iy = 0; iy < height; iy++)
+                    for (int iy = 0;  iy < _terrain.ChunkSize.y && iy < height; iy++)
                     {
-                        var blockID = GetBlockId(iy);
+                        var blockID = GetBlockId(iy + gridOrigin.y);
 
                         var pos = new int3(ix, iy, iz);
 
@@ -200,9 +154,14 @@ namespace MaximovInk.VoxelEngine
                         {
                             chunk.SetBlock(0, pos);
                         }
+
                         var index = VoxelDatabase.GetID(blockID);
 
                         chunk.SetBlock((ushort)(index), pos);
+
+                        var value = Mathf.Clamp01((height - iy) / (_terrain.ChunkSize.y));
+
+                        chunk.SetValue(pos, (byte)(value * 255f));
                     }
                 }
             }
@@ -214,22 +173,9 @@ namespace MaximovInk.VoxelEngine
 
         }
 
-        public void Generate()
-        {
-            _terrain.Clear();
-
-            _noise = new OpenSimplexNoise((long)(_seed));
-
-            for (int i = 0; i < _allocateChunkCount; i++)
-            {
-                _terrain.AllocateChunk(new int3(i, 0, 0));
-            }
-
-           
-
-           
-
-
-        }
     }
 }
+
+/*
+ _amplitude + _minY + _terrain.IsoLevel
+ */
