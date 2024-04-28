@@ -190,6 +190,17 @@ namespace MaximovInk.VoxelEngine
                 OutputTriangles = _outputTriangles
             };
 
+            _currentJob.valuesForward = _neighbors.Forward != null && !_neighbors.Forward.IsEmpty() ? new NativeArray<byte>(_neighbors.Forward._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.valuesRight = _neighbors.Right != null && !_neighbors.Right.IsEmpty() ? new NativeArray<byte>(_neighbors.Right._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.valuesTop = _neighbors.Top != null && !_neighbors.Top.IsEmpty() ? new NativeArray<byte>(_neighbors.Top._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+
+            _currentJob.valuesForwardRight = _neighbors.ForwardRight != null && !_neighbors.ForwardRight.IsEmpty() ? new NativeArray<byte>(_neighbors.ForwardRight._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.valuesTopRight = _neighbors.TopRight != null && !_neighbors.TopRight.IsEmpty() ? new NativeArray<byte>(_neighbors.TopRight._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.valuesForwardRightTop = _neighbors.ForwardTopRight != null && !_neighbors.ForwardTopRight.IsEmpty() ? new NativeArray<byte>(_neighbors.ForwardTopRight._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.valuesForwardTop = _neighbors.ForwardTop != null && !_neighbors.ForwardTop.IsEmpty() ? new NativeArray<byte>(_neighbors.ForwardTop._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+
+
+
             StartCoroutine(WaitFor(_currentJob.Schedule()));
         }
 
@@ -203,12 +214,24 @@ namespace MaximovInk.VoxelEngine
             _isEmpty = _currentJob._isEmpty;
             _isFull = _currentJob._isFull;
 
+            _currentJob.valuesForward.Dispose();
+            _currentJob.valuesRight.Dispose();
+            _currentJob.valuesTop.Dispose();
+
+            _currentJob.valuesForwardRight.Dispose();
+            _currentJob.valuesTopRight.Dispose();
+            _currentJob.valuesForwardRightTop.Dispose();
+            _currentJob.valuesForwardTop.Dispose();
+
             _mesh.Clear();
 
             _mesh.SetVertices(_currentJob.OutputVertices.AsArray());
             _mesh.SetNormals(_currentJob.OutputNormals.AsArray());
             _mesh.SetColors(_currentJob.OutputColors.AsArray());
             _mesh.SetIndices(_currentJob.OutputTriangles.AsArray(), MeshTopology.Triangles, 0);
+
+            // if (!Terrain.FlatShading)
+            //_mesh.RecalculateNormals(180, 0.5f);
 
             _meshCollider.sharedMesh = _mesh.vertexCount == 0 ? null : _mesh;
 

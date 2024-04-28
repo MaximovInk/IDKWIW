@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MaximovInk.VoxelEngine
 {
     public partial class VoxelChunk
     {
-        //private MarchingMeshData _meshData;
         private MeshFilter _meshFilter;
         private MeshRenderer _meshRenderer;
         private MeshCollider _meshCollider;
@@ -33,7 +30,6 @@ namespace MaximovInk.VoxelEngine
 
             _meshFilter.mesh = _mesh;
             _meshCollider = GetComponent<MeshCollider>();
-          
 
             ApplyMaterials();
 
@@ -42,10 +38,6 @@ namespace MaximovInk.VoxelEngine
             DistanceToTarget = float.MaxValue;
         }
 
-        private void ApplyMesh()
-        {
-            _meshData.ApplyToMesh(_mesh);
-        }
 
         private void ApplyMaterials()
         {

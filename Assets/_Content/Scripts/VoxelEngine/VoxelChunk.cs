@@ -18,7 +18,6 @@ namespace MaximovInk.VoxelEngine
         private bool _isInitialized;
         private bool _isDestroyed;
         private bool _isDirty;
-        private bool _invokeApplyMesh;
 
         private ChunkNeighbors _neighbors;
 
@@ -60,38 +59,6 @@ namespace MaximovInk.VoxelEngine
 
 
                 Generate();
-            }
-
-            if (_handle.IsCompleted) 
-            {
-                
-
-                /*
-                  Profiler.BeginSample("ApplyMesh");
-                                _invokeApplyMesh = false;
-
-
-                                Profiler.BeginSample("Send data to mesh");
-                                ApplyMesh();
-                                Profiler.EndSample();
-
-
-                                Profiler.BeginSample("Recalculate normals");
-                               // if (!Terrain.FlatShading)
-                                    //_mesh.RecalculateNormals(180, 0.5f);
-                                Profiler.EndSample();
-
-                                if (_mesh.vertexCount == 0)
-                                {
-                                    _meshCollider.sharedMesh = null;
-                                }
-                                else
-                                    _meshCollider.sharedMesh = _mesh;
-                                Profiler.EndSample();
-                 */
-
-
-                //EditorApplication.isPaused = true;
             }
         }
 

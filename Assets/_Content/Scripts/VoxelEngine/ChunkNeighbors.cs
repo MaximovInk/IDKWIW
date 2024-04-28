@@ -1,5 +1,6 @@
 ﻿namespace MaximovInk.VoxelEngine
 {
+    [System.Serializable]
     public struct ChunkNeighbors
     {
         public VoxelChunk Forward;

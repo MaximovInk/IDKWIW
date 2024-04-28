@@ -1,9 +1,13 @@
-﻿using Unity.Burst;
+﻿using System;
+using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
+using static UnityEditor.PlayerSettings;
 using static UnityEngine.Mesh;
+using static UnityEngine.Rendering.DebugUI;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -13,6 +17,16 @@ namespace MaximovInk.VoxelEngine
     {
         public NativeArray<ushort> _data;
         public NativeArray<byte> _values;
+
+        public NativeArray<byte> valuesForward;
+        public NativeArray<byte> valuesRight;
+        public NativeArray<byte> valuesTop;
+
+        public NativeArray<byte> valuesForwardRightTop;
+        public NativeArray<byte> valuesTopRight;
+        public NativeArray<byte> valuesForwardRight;
+        public NativeArray<byte> valuesForwardTop;
+
         public int lod;
         public bool smoothing;
 
@@ -36,6 +50,133 @@ namespace MaximovInk.VoxelEngine
         public NativeList<float4> OutputColors;
         public NativeList<int> OutputTriangles;
 
+
+        private bool TryGetForwardValue(int3 pos, out float value)
+        {
+            pos.z -= ChunkSize;
+            var index = VoxelUtility.PosToIndexInt(pos);
+
+            if (index >= valuesForward.Length)
+            {
+                value = 0;
+                return false;
+            }
+
+            value = valuesForward[index];
+            return true;
+        }
+
+        private bool TryGetTopValue(int3 pos, out float value)
+        {
+            pos.y -= ChunkSize;
+            var index = VoxelUtility.PosToIndexInt(pos);
+
+            if (index >= valuesTop.Length)
+            {
+                value = 0;
+                return false;
+            }
+
+            value = valuesTop[index];
+            return true;
+        }
+
+        private bool TryGetRightValue(int3 pos, out float value)
+        {
+            pos.x -= ChunkSize;
+            var index = VoxelUtility.PosToIndexInt(pos);
+
+            if (index >= valuesRight.Length)
+            {
+                value = 0;
+                return false;
+            }
+
+            value = valuesRight[index];
+            return true;
+        }
+
+        private bool TryGetValue(NativeArray<byte> array, int index, out float value)
+        {
+            if (index >= array.Length)
+            {
+                value = 0;
+                return false;
+            }
+
+            value = array[index];
+
+            return true;
+
+        }
+
+        private bool TryGetOverflowValue(int3 pos, bool right, bool top, bool forward, out float value)
+        {
+
+            if (right)
+                pos.x -= ChunkSize;
+
+            if (top)
+                pos.y -= ChunkSize;
+
+            if (forward)
+                pos.z -= ChunkSize;
+
+
+            var index = VoxelUtility.PosToIndexInt(pos);
+
+            if (right && top && forward)
+                return TryGetValue(valuesForwardRightTop, index, out value);
+            if (right && top)
+                return TryGetValue(valuesTopRight, index, out value);
+            if (forward && top)
+                return TryGetValue(valuesForwardTop, index, out value);
+            if (forward && right)
+                return TryGetValue(valuesForwardRight, index, out value);
+            if (forward)
+                return TryGetValue(valuesForward, index, out value);
+            if (top)
+                return TryGetValue(valuesTop, index, out value);
+            if (right)
+                return TryGetValue(valuesRight, index, out value);
+
+            value = 0;
+            return false;
+        }
+
+        private float GetValue(int3 pos, int currentIndex)
+        {
+
+            var index = VoxelUtility.PosToIndexInt(pos);
+
+            var right = pos.x >= ChunkSize;
+            var top = pos.y >= ChunkSize;
+            var forward = pos.z >= ChunkSize;
+
+            var overflow = right || top || forward;
+
+            float value;
+
+
+            if (overflow)
+            {
+                if (TryGetOverflowValue(pos, right,top,forward, out var overflowValue))
+                {
+                    value = overflowValue;
+                }
+                else if (_values[currentIndex] > _isoLevelByte)
+                    value = _values[currentIndex] / 2f;
+                else
+                    value = 0f;
+            }
+            else if (_data[index] == 0)
+                value = 0f;
+            else
+                value = _values[index];
+
+            return value;
+        }
+
         private int GetConfiguration(int currentIndex, int x, int y, int z, int lod)
         {
             var cubeIndex = 0;
@@ -45,29 +186,9 @@ namespace MaximovInk.VoxelEngine
                 var offset = offsets[i];
 
                 var pos = new int3(x + offset.x * lod, y + offset.y * lod, z + offset.z * lod);
-                var targetChunk = this;
 
-                var right = pos.x >= ChunkSize;
-                var top = pos.y >= ChunkSize;
-                var forward = pos.z >= ChunkSize;
 
-                var overflow = right || top || forward;
-
-                var index = VoxelUtility.PosToIndexInt(pos);
-
-                float value;
-
-                if (overflow)
-                {
-                    if (_values[currentIndex] > _isoLevelByte)
-                        value = _values[currentIndex] / 2f;
-                    else
-                        value = 0f;
-                }
-                else if (_data[index] == 0)
-                    value = 0f;
-                else
-                    value = _values[index];
+                var value = GetValue(pos, currentIndex);
 
                 value /= lod;
 

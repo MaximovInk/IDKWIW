@@ -102,7 +102,6 @@ namespace MaximovInk.IDKWIW
             }
         }
 
-
         private void CheckGround()
         {
             _halfHeight = _entityHeight / 2f;
@@ -132,8 +131,6 @@ namespace MaximovInk.IDKWIW
             if (_currentInput.LookAround && !Components.CameraController.IsFirstPerson) return;
 
             _rigidbody.rotation *= Quaternion.Euler(0, _currentInput.LookValue.x, 0);
-
-           
         }
 
         private void ApplyMove()
@@ -229,8 +226,6 @@ namespace MaximovInk.IDKWIW
         protected virtual void LateUpdate()
         {
             if (!IsOwner || !Components.IsInitialized) return;
-
-           
 
             Components.Animator.UpdateAnimation();
         }
