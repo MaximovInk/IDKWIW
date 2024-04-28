@@ -10,8 +10,11 @@ namespace MaximovInk.VoxelEngine
     {
         public event Action<VoxelChunk> OnChunkLoaded;
 
-        public int3 ChunkSize;
-        public float3 BlockSize;
+        public const int ChunkSize = 16;
+        public const int HalfChunkSize = ChunkSize / 2;
+        public const int DoubleChunkSize = ChunkSize * 2;
+        public const int BlockSize = 2;
+        public const int ChunkBlockSize = BlockSize * ChunkSize;
 
         [Range(0,255)]
         public byte IsoLevel = 2;
@@ -37,7 +40,7 @@ namespace MaximovInk.VoxelEngine
         {
             for (int i = 0; i < _allocateChunkCount; i++)
             {
-                AllocateChunk(new int3(i, 0, 0));
+                AllocateChunk(new int3(256+i, 0, 0));
             }
 
         }
@@ -171,9 +174,9 @@ namespace MaximovInk.VoxelEngine
             go.transform.SetParent(transform);
             go.transform.SetLocalPositionAndRotation(
                 new Vector3(
-                    chunkPos.x * ChunkSize.x * BlockSize.x,
-                    chunkPos.y * ChunkSize.y * BlockSize.y,
-                    chunkPos.z * ChunkSize.z * BlockSize.z),
+                    chunkPos.x * ChunkBlockSize,
+                    chunkPos.y * ChunkBlockSize,
+                    chunkPos.z * ChunkBlockSize),
                 Quaternion.identity);
             go.transform.localScale = Vector3.one;
             var chunk = go.AddComponent<VoxelChunk>();
@@ -232,22 +235,22 @@ namespace MaximovInk.VoxelEngine
             var yInvert = globalGridPos.y < 0;
             var zInvert = globalGridPos.z < 0;
 
-            globalGridPos.x = (xInvert ? -globalGridPos.x - 1 : globalGridPos.x) % ChunkSize.x;
-            globalGridPos.y = (yInvert ? -globalGridPos.y - 1 : globalGridPos.y) % ChunkSize.y;
-            globalGridPos.z = (zInvert ? -globalGridPos.z - 1 : globalGridPos.z) % ChunkSize.z;
+            globalGridPos.x = (xInvert ? -globalGridPos.x - 1 : globalGridPos.x) % ChunkSize;
+            globalGridPos.y = (yInvert ? -globalGridPos.y - 1 : globalGridPos.y) % ChunkSize;
+            globalGridPos.z = (zInvert ? -globalGridPos.z - 1 : globalGridPos.z) % ChunkSize;
 
-            if (xInvert) globalGridPos.x = ChunkSize.x - 1 - globalGridPos.x;
-            if (yInvert) globalGridPos.y = ChunkSize.y - 1 - globalGridPos.y;
-            if (zInvert) globalGridPos.z = ChunkSize.z - 1 - globalGridPos.z;
+            if (xInvert) globalGridPos.x = ChunkSize - 1 - globalGridPos.x;
+            if (yInvert) globalGridPos.y = ChunkSize - 1 - globalGridPos.y;
+            if (zInvert) globalGridPos.z = ChunkSize - 1 - globalGridPos.z;
 
             return globalGridPos;
         }
 
         private int3 GridToChunk(int3 gridPos)
         {
-            var chunkX = (gridPos.x < 0 ? (gridPos.x + 1 - ChunkSize.x) : gridPos.x) / ChunkSize.x;
-            var chunkY = (gridPos.y < 0 ? (gridPos.y + 1 - ChunkSize.y) : gridPos.y) / ChunkSize.y;
-            var chunkZ = (gridPos.z < 0 ? (gridPos.z + 1 - ChunkSize.z) : gridPos.z) / ChunkSize.z;
+            var chunkX = (gridPos.x < 0 ? (gridPos.x + 1 - ChunkSize) : gridPos.x) / ChunkSize;
+            var chunkY = (gridPos.y < 0 ? (gridPos.y + 1 - ChunkSize) : gridPos.y) / ChunkSize;
+            var chunkZ = (gridPos.z < 0 ? (gridPos.z + 1 - ChunkSize) : gridPos.z) / ChunkSize;
 
             return new int3(chunkX, chunkY, chunkZ);
         }
@@ -262,9 +265,9 @@ namespace MaximovInk.VoxelEngine
         private int3 LocalToGrid(Vector3 localPos)
         {
             return new int3(
-                Mathf.FloorToInt((localPos.x) / BlockSize.x),
-                Mathf.FloorToInt((localPos.y) / BlockSize.y),
-                Mathf.FloorToInt((localPos.z) / BlockSize.z));
+                Mathf.FloorToInt((localPos.x) / BlockSize),
+                Mathf.FloorToInt((localPos.y) / BlockSize),
+                Mathf.FloorToInt((localPos.z) / BlockSize));
         }
 
         private int3 LocalToChunk(Vector3 localPos)
@@ -272,9 +275,9 @@ namespace MaximovInk.VoxelEngine
             var chunkSize = ChunkSize * BlockSize;
 
             return new int3(
-                Mathf.FloorToInt(localPos.x / chunkSize.x), 
-                Mathf.FloorToInt(localPos.y / chunkSize.y),
-                Mathf.FloorToInt(localPos.z / chunkSize.z)
+                Mathf.FloorToInt(localPos.x / chunkSize), 
+                Mathf.FloorToInt(localPos.y / chunkSize),
+                Mathf.FloorToInt(localPos.z / chunkSize)
                 );
         }
 

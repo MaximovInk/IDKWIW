@@ -54,7 +54,7 @@ namespace MaximovInk.VoxelEngine
         {
             var globalPos = chunk.Terrain.transform.position;
 
-            var chunkSize = chunk.ChunkSize * chunk.BlockSize;
+            var chunkSize = VoxelTerrain.DoubleChunkSize;
 
             var halfSize = chunkSize / 2;
 
@@ -62,8 +62,8 @@ namespace MaximovInk.VoxelEngine
 
 
             DrawBox(globalPos + new Vector3(
-                    chunkPos.x * chunkSize.x + halfSize.x, chunkPos.y * chunkSize.y + halfSize.y, chunkPos.z * chunkSize.z + halfSize.z),
-                Quaternion.identity, new Vector3(chunkSize.x, chunkSize.y, chunkSize.z), Color.blue);
+                    chunkPos.x * chunkSize + halfSize, chunkPos.y * chunkSize + halfSize, chunkPos.z * chunkSize + halfSize),
+                Quaternion.identity, new Vector3(chunkSize, chunkSize, chunkSize), Color.blue);
 
         }
 

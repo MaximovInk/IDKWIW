@@ -7,8 +7,8 @@ namespace MaximovInk.VoxelEngine
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
     public partial class VoxelChunk : MonoBehaviour
     {
-        public int3 ChunkSize => Terrain.ChunkSize;
-        public float3 BlockSize => Terrain.BlockSize;
+        public const int ChunkSize = VoxelTerrain.ChunkSize;
+        public static float3 BlockSize => VoxelTerrain.BlockSize;
 
         public int3 Position;
         public VoxelTerrain Terrain;
@@ -107,7 +107,7 @@ namespace MaximovInk.VoxelEngine
 
             _isInitialized = true;
 
-            _data = new ChunkData(ChunkSize.x, ChunkSize.y, ChunkSize.z);
+            _data = new ChunkData(ChunkSize, ChunkSize, ChunkSize);
 
             InitializeMarchingCubes();
 
@@ -130,9 +130,9 @@ namespace MaximovInk.VoxelEngine
         public void UpdatePosition()
         {
             transform.localPosition = new Vector3(
-                Position.x * ChunkSize.x * BlockSize.x,
-                Position.y * ChunkSize.y * BlockSize.y,
-                Position.z * ChunkSize.z * BlockSize.z
+                Position.x * ChunkSize * BlockSize.x,
+                Position.y * ChunkSize * BlockSize.y,
+                Position.z * ChunkSize * BlockSize.z
             );
 
             gameObject.name = $"[Instance] Chunk {Position}";
@@ -164,7 +164,7 @@ namespace MaximovInk.VoxelEngine
 
         public int ValidateLodValue(int value)
         {
-            var limit = Mathf.Min(ChunkSize.x, ChunkSize.z, ChunkSize.y);
+            var limit = ChunkSize;
 
             if (value <= 1)
             {
@@ -218,7 +218,7 @@ namespace MaximovInk.VoxelEngine
 
         public byte GetValue(int3 position)
         {
-            if (position.x >= ChunkSize.x || position.y >= ChunkSize.y || position.z >= ChunkSize.z)
+            if (position.x >= ChunkSize || position.y >= ChunkSize || position.z >= ChunkSize)
             {
                 return 0;
             }
@@ -235,7 +235,7 @@ namespace MaximovInk.VoxelEngine
 
         public ushort GetBlock(int3 position)
         {
-            if (position.x >= ChunkSize.x || position.y >= ChunkSize.y || position.z >= ChunkSize.z)
+            if (position.x >= ChunkSize || position.y >= ChunkSize || position.z >= ChunkSize)
             {
                 return 0;
             }

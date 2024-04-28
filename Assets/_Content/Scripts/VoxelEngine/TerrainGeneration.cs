@@ -106,23 +106,25 @@ namespace MaximovInk.VoxelEngine
             return "Dirt";
         }
 
+        private static int3 ChunkSize => VoxelTerrain.ChunkSize;
+
         private void Generate(VoxelChunk chunk)
         {
             var chunkPos = chunk.Position;
 
-            var chunkSize = _terrain.ChunkSize;
-            var gridOrigin = chunkSize * chunkPos;
+           
+            var gridOrigin = ChunkSize * chunkPos;
 
-            for (int ix = 0; ix < _terrain.ChunkSize.x; ix++)
+            for (int ix = 0; ix < ChunkSize.x; ix++)
             {
-                for (int iz = 0; iz < _terrain.ChunkSize.z; iz++)
+                for (int iz = 0; iz < ChunkSize.z; iz++)
                 {
                     var height = GetHeight(ix + gridOrigin.x, iz + gridOrigin.z) - gridOrigin.y;
 
 
                     if (height <= 0) continue;
 
-                    for (int iy = 0;  iy < _terrain.ChunkSize.y && iy < height; iy++)
+                    for (int iy = 0;  iy < ChunkSize.y && iy < height; iy++)
                     {
                         var blockID = GetBlockId(iy + gridOrigin.y);
 
@@ -137,7 +139,7 @@ namespace MaximovInk.VoxelEngine
 
                         chunk.SetBlock((ushort)(index), pos);
 
-                        var value = Mathf.Clamp01((height - iy) / (_terrain.ChunkSize.y));
+                        var value = Mathf.Clamp01((height - iy) / (ChunkSize.y));
 
                         chunk.SetValue(pos, (byte)(value * 255f));
                     }

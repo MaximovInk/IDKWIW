@@ -44,13 +44,13 @@ namespace MaximovInk.VoxelEngine
             }
 
             if (right)
-                pos.x -= ChunkSize.x;
+                pos.x -= ChunkSize;
 
             if (top)
-                pos.y -= ChunkSize.y;
+                pos.y -= ChunkSize;
 
             if (forward)
-                pos.z -= ChunkSize.z;
+                pos.z -= ChunkSize;
 
             return targetChunk;
         }
@@ -82,9 +82,9 @@ namespace MaximovInk.VoxelEngine
                 var pos = new int3(x + offset.x * lod, y + offset.y* lod, z + offset.z* lod);
                 var targetChunk = this;
 
-                var right = pos.x >= ChunkSize.x;
-                var top = pos.y >= ChunkSize.y;
-                var forward = pos.z >= ChunkSize.z;
+                var right = pos.x >= ChunkSize;
+                var top = pos.y >= ChunkSize;
+                var forward = pos.z >= ChunkSize;
 
                 var overflow = right || top || forward;
 
@@ -131,17 +131,16 @@ namespace MaximovInk.VoxelEngine
 
             var blockSize = BlockSize * lod;
 
-            var chunkSize = ChunkSize;
-
             _isEmpty = true;
             _isFull = true;
 
-            for (int ix = 0; ix < chunkSize.x; ix+= lod)
+            for (int ix = 0; ix < ChunkSize; ix += lod)
             {
-                for (int iy = 0; iy < chunkSize.y; iy+= lod)
+                for (int iy = 0; iy < ChunkSize; iy += lod)
                 {
-                    for (int iz = 0; iz < chunkSize.y; iz+= lod)
+                    for (int iz = 0; iz < ChunkSize; iz += lod)
                     {
+
                         var pos = new int3(ix, iy, iz);
                         var index = VoxelUtility.PosToIndexInt(pos);
 
@@ -155,13 +154,7 @@ namespace MaximovInk.VoxelEngine
                             _isFull = false;
                         }
 
-                       
-                       
-
-                        //var pos = VoxelUtility.IndexToPos(index);
                         var posFloat = pos * BlockSize;
-
-                        //if (((int)(pos.x / lod + pos.y / lod + pos.z / lod)) % lod != 0) continue;
 
                         var cubeIndex = GetConfiguration(index,pos.x, pos.y, pos.z, lod);
 
@@ -169,7 +162,6 @@ namespace MaximovInk.VoxelEngine
                         {
                             continue;
                         }
-
 
                         var blockId = _data.Blocks[index];
                         var color = VoxelDatabase.GetVoxel(blockId).VertexColor;
@@ -633,7 +625,7 @@ namespace MaximovInk.VoxelEngine
 
         private void InitializeMarchingCubes()
         {
-            smoothedVerticesCache = new Dictionary<Vector3, int>(ChunkSize.x * ChunkSize.y * ChunkSize.z * 16);
+            smoothedVerticesCache = new Dictionary<Vector3, int>(ChunkSize * ChunkSize * ChunkSize * 16);
         }
     }
 }

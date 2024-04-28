@@ -89,16 +89,12 @@ namespace MaximovInk.VoxelEngine
 
         private float GetChunkDistanceStepAverage()
         {
-            return (_terrain.ChunkSize.x + _terrain.ChunkSize.z) / 2f * (_terrain.BlockSize.x + _terrain.BlockSize.z) / 2f;
+            return VoxelTerrain.ChunkBlockSize;
         }
 
         private bool UpdateChunkLOD(VoxelChunk chunk, Vector3 targetPos, float lodStep)
         {
-            var player = new float2(targetPos.x, targetPos.z);
-
-            var chunkPosD = new float2(chunk.transform.position.x, chunk.transform.position.z);
-
-            var distance = math.distance(player, chunkPosD) / lodStep;
+            var distance = Vector3.Distance(chunk.transform.position, targetPos)/lodStep;
 
             int lod = 1;
 
