@@ -47,6 +47,12 @@ namespace MaximovInk.IDKWIW
 
         private CapsuleCollider _collider;
 
+        private RaycastHit _groundHitInfo;
+
+        [SerializeField] private float _slopeLimit = 60f;
+
+        [SerializeField] private float _currentSlopeAngle;
+
         private void OnGroundChanged(bool newValue)
         {
             _rigidbody.drag = newValue ? _groundDrag : _airDrag;
@@ -107,7 +113,11 @@ namespace MaximovInk.IDKWIW
             _halfHeight = _entityHeight / 2f;
 
             var prevGround = _isGround;
-            _isGround = Physics.Raycast(transform.position, Vector3.down, _halfHeight, _groundLayerMask);
+            _isGround = Physics.Raycast(transform.position, Vector3.down, out _groundHitInfo, _halfHeight, _groundLayerMask);
+
+            if(_isGround)
+                _isGround = (Vector3.Angle(Vector3.up, _groundHitInfo.normal) <= _slopeLimit);
+
             if (prevGround != _isGround)
                 OnGroundChangedEvent?.Invoke(_isGround);
         }
@@ -133,6 +143,16 @@ namespace MaximovInk.IDKWIW
             _rigidbody.rotation *= Quaternion.Euler(0, _currentInput.LookValue.x, 0);
         }
 
+        private Vector3 GetSlopeMoveDir(Vector3 moveDirection)
+        {
+            return Vector3.ProjectOnPlane(moveDirection, _groundHitInfo.normal).normalized;
+        }
+
+        private bool IsOnSlope(float angle)
+        {
+            return angle < _slopeLimit&& _currentSlopeAngle != 0;
+        }
+
         private void ApplyMove()
         {
             _velocity = Vector3.zero;
@@ -141,9 +161,25 @@ namespace MaximovInk.IDKWIW
 
             if (input.x != 0 || input.y != 0)
             {
+                var moveDirection = transform.forward * input.y + transform.right * input.x;
 
-                _velocity += transform.forward * input.y;
-                _velocity += transform.right * input.x;
+                // therefore
+                _currentSlopeAngle = Vector3.Angle(Vector3.up, _groundHitInfo.normal);
+
+
+                if (IsOnSlope(_currentSlopeAngle))
+                {
+                    var slopedMove = GetSlopeMoveDir(moveDirection);
+
+                    _velocity += slopedMove;
+                }
+                else
+                {
+                    _velocity += moveDirection;
+
+                }
+
+               
 
                 _velocity *= _speed;
 
