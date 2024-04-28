@@ -64,29 +64,31 @@ namespace MaximovInk.VoxelEngine
 
             if (_invokeApplyMesh && _currentThread is not { IsAlive: true }) 
             {
-                Profiler.BeginSample("ApplyMesh");
-                _invokeApplyMesh = false;
+
+                /*
+                  Profiler.BeginSample("ApplyMesh");
+                                _invokeApplyMesh = false;
 
 
-                Profiler.BeginSample("Send data to mesh");
-                ApplyMesh();
-                Profiler.EndSample();
+                                Profiler.BeginSample("Send data to mesh");
+                                ApplyMesh();
+                                Profiler.EndSample();
 
 
-                Profiler.BeginSample("Recalculate normals");
-               // if (!Terrain.FlatShading)
-                    //_mesh.RecalculateNormals(180, 0.5f);
-                Profiler.EndSample();
+                                Profiler.BeginSample("Recalculate normals");
+                               // if (!Terrain.FlatShading)
+                                    //_mesh.RecalculateNormals(180, 0.5f);
+                                Profiler.EndSample();
 
-                if (_mesh.vertexCount == 0)
-                {
-                    _meshCollider.sharedMesh = null;
-                }
-                else
-                    _meshCollider.sharedMesh = _mesh;
-                Profiler.EndSample();
+                                if (_mesh.vertexCount == 0)
+                                {
+                                    _meshCollider.sharedMesh = null;
+                                }
+                                else
+                                    _meshCollider.sharedMesh = _mesh;
+                                Profiler.EndSample();
+                 */
 
-                
 
                 //EditorApplication.isPaused = true;
             }
