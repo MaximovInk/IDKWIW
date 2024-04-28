@@ -40,6 +40,8 @@ namespace MaximovInk.VoxelEngine
 
         public bool IsFree = true;
 
+        public bool IsLoaded;
+
         #region UnityMessages
 
         private void Update()
@@ -92,6 +94,7 @@ namespace MaximovInk.VoxelEngine
             UpdatePosition();
 
             _isEmpty = true;
+            IsLoaded = false;
         }
 
         public void UpdateImmediately()

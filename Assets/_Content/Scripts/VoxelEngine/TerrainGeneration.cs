@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using NoiseTest;
+using Icaria.Engine.Procedural;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -14,7 +14,6 @@ namespace MaximovInk.VoxelEngine
 
         public Vector2 Scale;
         public Vector2 Offset;
-
     }
 
     [System.Serializable]
@@ -37,34 +36,15 @@ namespace MaximovInk.VoxelEngine
 
         [SerializeField] private int _seed;
 
-        [SerializeField]
-        private float _genDelay = 0.1f;
-
-        [SerializeField] private int _minY;
-
-        private float _timer;
-
-        private bool _changed = false;
-
         private VoxelTerrain _terrain;
 
-        private OpenSimplexNoise _noise;
-
         public bool FlatShading;
-
-
-        private void OnValidate()
-        {
-            _changed = true;
-        }
 
         private void Start()
         {
             _terrain = GetComponent<VoxelTerrain>();
 
             _terrain.OnChunkLoaded += Generate;
-
-            _noise = new OpenSimplexNoise((long)(_seed));
         }
 
         public float GetHeight(float x, float y)
@@ -80,7 +60,8 @@ namespace MaximovInk.VoxelEngine
                 var nx = (data.Offset.x + x) / data.Scale.x;
                 var ny = (data.Offset.y + y) / data.Scale.y;
 
-                height += (_noise.Evaluate(nx,ny) + 1)/2f;
+
+                height += data.Value * (IcariaNoise.GradientNoise(nx, ny, _seed) + 1)/2f;
                 divider += data.Value;
             }
 
@@ -155,7 +136,3 @@ namespace MaximovInk.VoxelEngine
 
     }
 }
-
-/*
- _amplitude + _minY + _terrain.IsoLevel
- */

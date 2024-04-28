@@ -187,7 +187,6 @@ namespace MaximovInk.VoxelEngine
 
                 var pos = new int3(x + offset.x * lod, y + offset.y * lod, z + offset.z * lod);
 
-
                 var value = GetValue(pos, currentIndex);
 
                 value /= lod;

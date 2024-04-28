@@ -58,9 +58,13 @@ namespace MaximovInk.VoxelEngine
 
         public const float ChunkBlockSize = BlockSize * ChunkSize;
         public const float HalfChunkBlockSize = ChunkBlockSize / 2;
+        public const float QuartChunkBlockSize = ChunkBlockSize / 4;
         public const float ChunkBlockSizeSqr = ChunkBlockSize * ChunkBlockSize;
 
         public Transform Target;
+
+        private Vector3 _lastAppliedLODPosition;
+        private Vector3 _lastAppliedLoadPosition;
 
         [Range(0,255)]
         public byte IsoLevel = 2;
@@ -96,6 +100,9 @@ namespace MaximovInk.VoxelEngine
 
             CacheLODSettings();
             CacheLoaderSettings();
+
+            _invokeUpdateLOD = true;
+            _invokeUpdatePosition = true;
         }
 
         private void CacheLoaderSettings()
@@ -129,32 +136,71 @@ namespace MaximovInk.VoxelEngine
             _lodSettings._timer -= _lodSettings._timer / 2f;
         }
 
+        private bool _invokeUpdateLOD;
+        private bool _invokeUpdatePosition;
+
         private void Update()
         {
             if (Target == null) return;
+            if (_chunksCache.Count == 0) return;
+
+            if (!_invokeUpdateLOD && Vector3.Distance(_lastAppliedLODPosition, Target.position) > QuartChunkBlockSize)
+            {
+                _lastAppliedLODPosition = Target.position;
+                _invokeUpdateLOD = true;
+            }
+
+            if (!_invokeUpdatePosition && Vector3.Distance(_lastAppliedLoadPosition, Target.position) > QuartChunkBlockSize)
+            {
+                _lastAppliedLoadPosition = Target.position;
+                _invokeUpdatePosition = true;
+            }
 
             _lodSettings._timer += Time.deltaTime;
             _loaderSettings._timer += Time.deltaTime;
 
             if (_lodSettings._timer > _lodSettings.Delay)
             {
+                if (_invokeUpdateLOD)
+                {
+                    _invokeUpdateLOD = false;
+                    UpdateChunkLOD();
+                }
+                    
                 _lodSettings._timer = 0f;
-
-                UpdateChunksState();
             }
+
+            
+
 
             if (_loaderSettings._timer > _lodSettings.Delay)
             {
-                _loaderSettings._timer = 0f;
+                UpdateChunksState();
 
-                LoadAroundChunks();
+                if (_invokeUpdatePosition)
+                {
+                    _invokeUpdatePosition = false;
+                    LoadAroundChunks();
+                }
+
+                _loaderSettings._timer = 0f;
+            }
+        }
+
+        private void UpdateChunkLOD()
+        {
+            foreach (var chunk in _chunksCache.Values)
+            {
+                if (UpdateChunkLOD(chunk))
+                {
+                    _invokeUpdateLOD = true;
+                    return;
+                }
             }
         }
 
         private void UpdateChunksState()
         {
-            if(_chunksCache.Count == 0)return;
-
             //SortChunksByLod();
 
             _freeChunks.Clear();
@@ -163,12 +209,17 @@ namespace MaximovInk.VoxelEngine
             {
                 var changed = UpdateChunkLOD(chunk);
 
-                chunk.IsFree = chunk.LOD >= _lodSettings.LODFreeChunk;
+                chunk.IsFree = chunk.LOD >= _lodSettings.LODFreeChunk || ((chunk.IsFull() || chunk.IsEmpty()) && !chunk.IsLoaded);
 
                 if(chunk.IsFree)
                     _freeChunks.Push(chunk);
 
-                if (changed) return;
+                if (changed)
+                {
+                    _invokeUpdateLOD = true;
+                    _invokeUpdatePosition = true;
+                    return;
+                }
             }
         }
 
@@ -220,6 +271,11 @@ namespace MaximovInk.VoxelEngine
            
             var origin = WorldToChunkPosition(GetTargetPos());
 
+            foreach (var chunk in _chunksCache.Values)
+            {
+                chunk.IsLoaded = false;
+            }
+
             for (var ix = -min.x; ix <= max.x; ix++)
             {
                 for (var iy = min.y; iy <= max.y; iy++)
@@ -246,6 +302,8 @@ namespace MaximovInk.VoxelEngine
                         freeChunk.Position = currentPos;
 
                         LoadChunk(currentPos, freeChunk);
+
+                        freeChunk.IsLoaded = true;
 
                     }
                 }
