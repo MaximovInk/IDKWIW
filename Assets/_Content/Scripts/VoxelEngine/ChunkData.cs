@@ -1,18 +1,18 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using Unity.Collections;
 
 namespace MaximovInk.VoxelEngine
 {
-    public class ChunkData
+    public class ChunkData : IDisposable
     {
-        public ushort[] Blocks;
-        public byte[] Value;
-        public byte[] Bitmask;
+        public NativeArray<ushort> Blocks;
+        public NativeArray<byte> Value;
 
         public ChunkData(int width, int height, int depth)
         {
-            Blocks = new ushort[width * height * depth];
-            Value = new byte[width * height * depth];
-            Bitmask = new byte[width * height * depth];
+            Blocks = new NativeArray<ushort>(width*height*depth, Allocator.Persistent);
+            Value = new NativeArray<byte>(width*height*depth, Allocator.Persistent);
 
             Clear();
         }
@@ -23,7 +23,6 @@ namespace MaximovInk.VoxelEngine
             {
                 Blocks[i] = 0;
                 Value[i] = 0;
-                Bitmask[i] = 0;
             }
         }
 
@@ -34,5 +33,10 @@ namespace MaximovInk.VoxelEngine
 
         public int ArraySize => Blocks.Length;
 
+        public void Dispose()
+        {
+            Blocks.Dispose();
+            Value.Dispose();
+        }
     }
 }

@@ -62,8 +62,9 @@ namespace MaximovInk.VoxelEngine
                 Generate();
             }
 
-            if (_invokeApplyMesh && _currentThread is not { IsAlive: true }) 
+            if (_handle.IsCompleted) 
             {
+                
 
                 /*
                   Profiler.BeginSample("ApplyMesh");
@@ -97,6 +98,9 @@ namespace MaximovInk.VoxelEngine
         private void OnDestroy()
         {
             _isDestroyed = true;
+            _data.Dispose();
+
+            OnMarchingCubesDestroy();
         }
 
         #endregion
@@ -163,8 +167,6 @@ namespace MaximovInk.VoxelEngine
         {
             return _isEmpty;
         }
-
-      
 
         private void ValidateLodValue()
         {

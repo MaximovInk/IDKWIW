@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Threading;
 using Unity.Mathematics;
 using UnityEngine;
@@ -6,13 +7,24 @@ using UnityEngine.Profiling;
 using UnityEngine;
 using Unity.Collections;
 using Unity.Jobs;
+using static UnityEngine.InputManagerEntry;
+using System.Collections;
 
 namespace MaximovInk.VoxelEngine
 {
     public partial class VoxelChunk
     {
-        private Dictionary<Vector3, int> smoothedVerticesCache;
-        private float[] cubeValues = new float[8];
+        //private Dictionary<Vector3, int> smoothedVerticesCache;
+
+        private NativeHashMap<float3, int> smoothedVerticesCache;
+        private NativeArray<float> cubeValues;
+
+        private NativeList<float3> _outputVertices;
+        private NativeList<float3> _outputNormals;
+        private NativeList<float4> _outputColors;
+        private NativeList<int> _outputTriangles;
+
+        private NativeArray<float4> _blockColors;
 
         private float _isoLevel;
 
@@ -52,23 +64,6 @@ namespace MaximovInk.VoxelEngine
 
             return targetChunk;
         }
-
-        private float3 InterpolateEdges(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, float valueAtVertex2)
-        {
-            if (Mathf.Abs(valueAtVertex1) < 0.00001f)
-                return edgeVertex1;
-
-            if (Mathf.Abs(valueAtVertex2) < 0.00001f)
-                return edgeVertex2;
-
-            var atVertex1 = valueAtVertex2 - valueAtVertex1;
-
-            if (Mathf.Abs(atVertex1) < 0.00001f)
-                return edgeVertex1;
-
-            return edgeVertex1 + (_isoLevel - valueAtVertex1) / (atVertex1) * (edgeVertex2 - edgeVertex1);
-        }
-
         private int GetConfiguration(int currentIndex, int x, int y, int z, int lod)
         {
             var cubeIndex = 0;
@@ -118,263 +113,108 @@ namespace MaximovInk.VoxelEngine
             return cubeIndex;
         }
 
-        private Thread _currentThread;
 
-        private void MeshingThread()
+        private void InitializeMarchingCubes()
         {
-            var smoothing = !Terrain.FlatShading;
-
-            ValidateLodValue();
-            var lod = _lod;
-
-            var blockSize = BlockSize * lod;
-
-            _isEmpty = true;
-            _isFull = true;
-
-            for (int ix = 0; ix < ChunkSize; ix += lod)
-            {
-                for (int iy = 0; iy < ChunkSize; iy += lod)
-                {
-                    for (int iz = 0; iz < ChunkSize; iz += lod)
-                    {
-
-                        var pos = new int3(ix, iy, iz);
-                        var index = VoxelUtility.PosToIndexInt(pos);
-
-
-                        if (_data.Blocks[index] > 0)
-                        {
-                            _isEmpty = false;
-                        }
-                        else
-                        {
-                            _isFull = false;
-                        }
-
-                        var posFloat = pos * BlockSize;
-
-                        var cubeIndex = GetConfiguration(index,pos.x, pos.y, pos.z, lod);
-
-                        if (cubeIndex is 0 or 255)
-                        {
-                            continue;
-                        }
-
-                        var blockId = _data.Blocks[index];
-                        var color = VoxelDatabase.GetVoxel(blockId).VertexColor;
-
-                        var edges = triTable[cubeIndex];
-
-                        for (var i = 0; edges[i] != -1 && i < 12; i += 3)
-                        {
-                            var e00 = edgeConnections[edges[i]][0];
-                            var e01 = edgeConnections[edges[i]][1];
-
-                            var e10 = edgeConnections[edges[i + 1]][0];
-                            var e11 = edgeConnections[edges[i + 1]][1];
-
-                            var e20 = edgeConnections[edges[i + 2]][0];
-                            var e21 = edgeConnections[edges[i + 2]][1];
-
-                            var a = InterpolateEdges(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01],
-                                cubeValues[e01]) * blockSize + posFloat;
-
-                            var b = InterpolateEdges(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11],
-                                cubeValues[e11]) * blockSize + posFloat;
-
-                            var c = InterpolateEdges(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21],
-                                cubeValues[e21]) * blockSize + posFloat;
-
-                            if (lod == 2)
-                            {
-                                a.y += 3.1f;
-                                b.y += 3.1f;
-                                c.y += 3.1f;
-                            }
-
-                            if (lod == 4)
-                            {
-                                a.y += 8.97f;
-                                b.y += 8.97f;
-                                c.y += 8.97f;
-                            }
-
-                            if (lod == 8)
-                            {
-                                a.y += 12.5f;
-                                b.y += 12.5f;
-                                c.y += 12.5f;
-                            }
-
-                            if (a.Equals(b) || a.Equals(c) || b.Equals(c)) continue;
-
-                            var normal = math.normalize(math.cross(b - a, c - a));
-
-                            lock (_meshData)
-                            {
-
-                                if (smoothing)
-                                {
-                                    if (smoothedVerticesCache.TryGetValue(c, out var pointC))
-                                    {
-                                        _meshData.Triangles.Add(pointC);
-                                    }
-                                    else
-                                    {
-                                        var idx = smoothedVerticesCache.Count;
-                                        smoothedVerticesCache[c] = idx;
-                                        _meshData.Normals.Add(normal);
-                                        _meshData.Vertices.Add(c);
-                                        _meshData.Colors.Add(color);
-                                        _meshData.Triangles.Add(idx);
-                                    }
-
-                                    if (smoothedVerticesCache.TryGetValue(a, out var pointA))
-                                    {
-                                        _meshData.Triangles.Add(pointA);
-                                    }
-                                    else
-                                    {
-
-                                        var idx = smoothedVerticesCache.Count;
-                                        smoothedVerticesCache[a] = idx;
-                                        _meshData.Normals.Add(normal);
-                                        _meshData.Vertices.Add(a);
-                                        _meshData.Colors.Add(color);
-                                        _meshData.Triangles.Add(idx);
-
-                                    }
-
-                                    if (smoothedVerticesCache.TryGetValue(b, out var pointB))
-                                    {
-                                        _meshData.Triangles.Add(pointB);
-                                    }
-                                    else
-                                    {
-                                        var idx = smoothedVerticesCache.Count;
-                                        smoothedVerticesCache[b] = idx;
-                                        _meshData.Normals.Add(normal);
-                                        _meshData.Vertices.Add(b);
-                                        _meshData.Colors.Add(color);
-                                        _meshData.Triangles.Add(idx);
-                                    }
-
-                                }
-                                else
-                                {
-                                    _meshData.Triangles.Add(_meshData.Vertices.Count);
-                                    _meshData.Triangles.Add(_meshData.Vertices.Count + 1);
-                                    _meshData.Triangles.Add(_meshData.Vertices.Count + 2);
-
-                                    _meshData.Vertices.Add(a);
-                                    _meshData.Vertices.Add(b);
-                                    _meshData.Vertices.Add(c);
-
-                                    _meshData.Normals.Add(normal);
-                                    _meshData.Normals.Add(normal);
-                                    _meshData.Normals.Add(normal);
-
-                                    _meshData.Colors.Add(color);
-                                    _meshData.Colors.Add(color);
-                                    _meshData.Colors.Add(color);
-
-                                }
-                            }
-
-                        }
-
-                    }
-                }
-            }
-
-            _invokeApplyMesh = true;
-        }
-
-        private void Generate()
-        {
-            var job = new MarchingCubesJob();
-
-            job.smoothedVerticesCache = new NativeHashMap<float3, int>(0, Allocator.TempJob);
-            job.cubeValues = new NativeArray<float>(8, Allocator.TempJob);
-
-            job._data = new NativeArray<ushort>(_data.Blocks, Allocator.TempJob);
-            job._values = new NativeArray<byte>(_data.Value, Allocator.TempJob);
-
-            job.lod = _lod;
-
-            job.smoothing = !Terrain.FlatShading;
-
-            job._isoLevelByte = Terrain.IsoLevel;
-            job._isoLevel = Terrain.IsoLevel / 255f;
+            smoothedVerticesCache =
+                new NativeHashMap<float3, int>(ChunkSize * ChunkSize * ChunkSize * 16, Allocator.Persistent);
+            cubeValues = new NativeArray<float>(8, Allocator.Persistent);
 
             var voxels = VoxelDatabase.GetAllVoxels();
-
-            job._blockColors = new NativeArray<float4>(voxels.Count, Allocator.TempJob);
+            _blockColors = new NativeArray<float4>(voxels.Count, Allocator.Persistent);
 
             for (int i = 0; i < voxels.Count; i++)
             {
                 var c = voxels[i].VertexColor;
-                job._blockColors[i] = new float4(c.r,c.g,c.b,c.a);
+                _blockColors[i] = new float4(c.r, c.g, c.b, c.a);
             }
 
-            job.OutputVertices = new NativeList<float3>(0, Allocator.TempJob);
-            job.OutputNormals = new NativeList<float3>(0, Allocator.TempJob);
-            job.OutputColors = new NativeList<float4>(0, Allocator.TempJob);
-            job.OutputTriangles = new NativeList<int>(0, Allocator.TempJob);
+            _outputVertices = new NativeList<float3>(0, Allocator.Persistent);
+            _outputNormals = new NativeList<float3>(0, Allocator.Persistent);
+            _outputColors = new NativeList<float4>(0, Allocator.Persistent);
+            _outputTriangles = new NativeList<int>(0, Allocator.Persistent);
+        }
 
+        private void OnMarchingCubesDestroy()
+        {
+            smoothedVerticesCache.Dispose();
+            cubeValues.Dispose();
 
-            job.Schedule().Complete();
+            _blockColors.Dispose();
 
-            _isEmpty = job._isEmpty;
-            _isFull = job._isFull;
+            _outputColors.Dispose();
+            _outputTriangles.Dispose();
+            _outputVertices.Dispose();
+            _outputNormals.Dispose();
+        }
 
-            job._data.Dispose();
-            job._values.Dispose();
-            job._blockColors.Dispose();
+        private JobHandle _handle;
+        private MarchingCubesJob _currentJob;
 
-            _mesh.Clear();
+        private bool _isRunning;
 
-            _mesh.SetVertices(job.OutputVertices.AsArray());
-            _mesh.SetNormals(job.OutputNormals.AsArray());
-            _mesh.SetColors(job.OutputColors.AsArray());
-            _mesh.SetIndices(job.OutputTriangles.AsArray(), MeshTopology.Triangles, 0);
-                
-
-            job.OutputColors.Dispose();
-            job.OutputTriangles.Dispose();
-            job.OutputVertices.Dispose();
-            job.OutputNormals.Dispose();
-
-
-            job.smoothedVerticesCache.Dispose();
-            job.cubeValues.Dispose();
-
-            _meshCollider.sharedMesh = _mesh.vertexCount == 0 ? null : _mesh;
-
-
-
-
-            /*
-
-            if (_currentThread is { IsAlive: true })
+        private void Generate()
+        {
+            if (_isRunning || !_isInitialized)
             {
                 _isDirty = true;
+
                 return;
             }
 
-            _meshData.Clear();
+            _isRunning = true;
+
+            ValidateLodValue();
+
             smoothedVerticesCache.Clear();
 
-            _invokeApplyMesh = false;
+            _outputColors.Clear();
+            _outputVertices.Clear();
+            _outputTriangles.Clear();
+            _outputNormals.Clear();
 
-            _isoLevel = Terrain.IsoLevel / 255f;
-            _currentThread = new Thread(MeshingThread);
+            _currentJob = new MarchingCubesJob
+            {
+                smoothedVerticesCache = smoothedVerticesCache,
+                cubeValues = cubeValues,
+                _data = new NativeArray<ushort>(_data.Blocks, Allocator.TempJob),
+                _values = new NativeArray<byte>(_data.Value, Allocator.TempJob),
+                lod = _lod,
+                smoothing = !Terrain.FlatShading,
+                _isoLevelByte = Terrain.IsoLevel,
+                _isoLevel = Terrain.IsoLevel / 255f,
+                _blockColors = _blockColors,
+                OutputVertices = _outputVertices,
+                OutputNormals = _outputNormals,
+                OutputColors = _outputColors,
+                OutputTriangles = _outputTriangles
+            };
 
-            MeshingThread();
-
-            _currentThread.Start();*/
+            StartCoroutine(WaitFor(_currentJob.Schedule()));
         }
+
+
+        IEnumerator WaitFor(JobHandle job)
+        {
+            yield return new WaitUntil(() => job.IsCompleted);
+
+            job.Complete();
+
+            _isEmpty = _currentJob._isEmpty;
+            _isFull = _currentJob._isFull;
+
+            _mesh.Clear();
+
+            _mesh.SetVertices(_currentJob.OutputVertices.AsArray());
+            _mesh.SetNormals(_currentJob.OutputNormals.AsArray());
+            _mesh.SetColors(_currentJob.OutputColors.AsArray());
+            _mesh.SetIndices(_currentJob.OutputTriangles.AsArray(), MeshTopology.Triangles, 0);
+
+            _meshCollider.sharedMesh = _mesh.vertexCount == 0 ? null : _mesh;
+
+            _isRunning = false;
+        }
+
 
         private static readonly int3[] offsets = new int3[]
    {
@@ -685,9 +525,6 @@ namespace MaximovInk.VoxelEngine
             Profiler.EndSample();
         }
 
-        private void InitializeMarchingCubes()
-        {
-            smoothedVerticesCache = new Dictionary<Vector3, int>(ChunkSize * ChunkSize * ChunkSize * 16);
-        }
+       
     }
 }

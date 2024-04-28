@@ -111,7 +111,6 @@ namespace MaximovInk.VoxelEngine
             _isEmpty = true;
             _isFull = true;
 
-        
             var blockSize = BlockSize * lod;
 
             for (int ix = 0; ix < ChunkSize; ix += lod)

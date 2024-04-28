@@ -33,7 +33,7 @@ namespace MaximovInk.VoxelEngine
 
             _meshFilter.mesh = _mesh;
             _meshCollider = GetComponent<MeshCollider>();
-            _meshCollider.sharedMesh = _mesh;
+          
 
             ApplyMaterials();
 

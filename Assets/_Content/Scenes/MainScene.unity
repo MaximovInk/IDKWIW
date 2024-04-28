@@ -7252,7 +7252,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1472512348
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7269,7 +7269,7 @@ MonoBehaviour:
   IsoLevel: 25
   FlatShading: 0
   _material: {fileID: 2100000, guid: aad58c289d9dc6547813f08d3b5b17cf, type: 2}
-  _allocateChunkCount: 512
+  _allocateChunkCount: 256
   _lodSettings:
     LODs:
     - LOD: 16
@@ -7292,9 +7292,9 @@ MonoBehaviour:
     LODFreeChunk: 8
   _loaderSettings:
     ChunkAroundUpdate:
-      x: 8
+      x: 2
       y: 1
-      z: 8
+      z: 2
     Delay: 0.05
     _timer: 0
     _loaderMax:

@@ -95,7 +95,10 @@ namespace MaximovInk.IDKWIW
 
             if (IsOwner)
             {
-                FindObjectOfType<VoxelTerrain>().Target = transform;
+                var terrain = FindObjectOfType<VoxelTerrain>();
+
+                if (terrain != null)
+                    terrain.Target = transform;
             }
         }
 
