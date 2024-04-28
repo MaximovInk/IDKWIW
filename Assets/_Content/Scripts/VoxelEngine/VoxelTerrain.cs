@@ -22,8 +22,6 @@ namespace MaximovInk.VoxelEngine
     {
         public ChunkLODParameter[] LODs;
 
-       
-
         public float Delay;
 
         [HideInInspector]
@@ -36,6 +34,16 @@ namespace MaximovInk.VoxelEngine
     public struct VoxelTerrainLoaderSettings
     {
         public int3 ChunkAroundUpdate;
+
+        public float Delay;
+
+        [HideInInspector]
+        public float _timer;
+
+        [HideInInspector]
+        public int3 _loaderMax;
+        [HideInInspector]
+        public int3 _loaderMin;
     }
 
     public class VoxelTerrain : MonoBehaviour
@@ -46,7 +54,11 @@ namespace MaximovInk.VoxelEngine
         public const int HalfChunkSize = ChunkSize / 2;
         public const int DoubleChunkSize = ChunkSize * 2;
         public const int BlockSize = 2;
+
+
         public const int ChunkBlockSize = BlockSize * ChunkSize;
+        public const int HalfChunkBlockSize = ChunkBlockSize / 2;
+        public const int ChunkBlockSizeSqr = ChunkBlockSize * ChunkBlockSize;
 
         public Transform Target;
 
@@ -70,7 +82,6 @@ namespace MaximovInk.VoxelEngine
         [SerializeField]
         private int _allocateChunkCount;
 
-        public VoxelTerrainLODSettings LODSettings => _lodSettings;
         [SerializeField] private VoxelTerrainLODSettings _lodSettings;
         [SerializeField] private VoxelTerrainLoaderSettings _loaderSettings;
 
@@ -84,6 +95,24 @@ namespace MaximovInk.VoxelEngine
             }
 
             CacheLODSettings();
+            CacheLoaderSettings();
+        }
+
+        private void CacheLoaderSettings()
+        {
+            var chunkAroundUpdate = _loaderSettings.ChunkAroundUpdate;
+
+            var xSize = Mathf.CeilToInt(chunkAroundUpdate.x / 2f);
+            var ySize = chunkAroundUpdate.y;
+            var zSize = Mathf.CeilToInt(chunkAroundUpdate.z / 2f);
+
+            var xMin = chunkAroundUpdate.x - xSize;
+            //var yMin = _chunkAroundUpdate.y - ySize;
+            var zMin = chunkAroundUpdate.z - zSize;
+
+            _loaderSettings._loaderMin = new int3(xMin, -1, zMin);
+
+            _loaderSettings._loaderMax = new int3(xSize, ySize, zSize);
         }
 
         private void CacheLODSettings()
@@ -96,17 +125,27 @@ namespace MaximovInk.VoxelEngine
             }
 
             _lodSettings.LODs = _lodSettings.LODs.OrderByDescending(n => n.DistanceInChunks).ToArray();
+
+            _lodSettings._timer -= _lodSettings._timer / 2f;
         }
 
         private void Update()
         {
+            if (Target == null) return;
+
             _lodSettings._timer += Time.deltaTime;
+            _loaderSettings._timer += Time.deltaTime;
 
             if (_lodSettings._timer > _lodSettings.Delay)
             {
                 _lodSettings._timer = 0f;
 
                 UpdateChunksState();
+            }
+
+            if (_loaderSettings._timer > _lodSettings.Delay)
+            {
+                _loaderSettings._timer = 0f;
 
                 LoadAroundChunks();
             }
@@ -115,7 +154,6 @@ namespace MaximovInk.VoxelEngine
         private void UpdateChunksState()
         {
             if(_chunksCache.Count == 0)return;
-            if (Target == null) return;
 
             //SortChunksByLod();
 
@@ -134,9 +172,14 @@ namespace MaximovInk.VoxelEngine
             }
         }
 
+        private Vector3 GetTargetPos()
+        {
+            return Target.position + Target.forward * HalfChunkBlockSize;
+        }
+
         private bool UpdateChunkLOD(VoxelChunk chunk)
         {
-            var distance = Vector3.Distance(chunk.transform.position, Target.transform.position) /
+            var distance = Vector3.Distance(chunk.transform.position, GetTargetPos()) /
                            ChunkBlockSize;
 
             chunk.DistanceToTarget = distance;
@@ -170,28 +213,20 @@ namespace MaximovInk.VoxelEngine
 
         private void LoadAroundChunks()
         {
-            if (Target == null) return;
             if (_freeChunks.Count == 0) return;
 
-            var chunkAroundUpdate = _loaderSettings.ChunkAroundUpdate;
+            var min = _loaderSettings._loaderMin;
+            var max = _loaderSettings._loaderMax;
+           
+            var origin = WorldToChunkPosition(GetTargetPos());
 
-            var xSize = Mathf.CeilToInt(chunkAroundUpdate.x / 2f);
-            var ySize = chunkAroundUpdate.y;
-            var zSize = Mathf.CeilToInt(chunkAroundUpdate.z / 2f);
-
-            var xMin = chunkAroundUpdate.x - xSize;
-            //var yMin = _chunkAroundUpdate.y - ySize;
-            var zMin = chunkAroundUpdate.z - zSize;
-
-            var origin = WorldToChunkPosition(Target.position);
-
-            for (var ix = -xMin; ix <= xSize; ix++)
+            for (var ix = -min.x; ix <= max.x; ix++)
             {
-                for (var iy = -1; iy <= ySize; iy++)
+                for (var iy = min.y; iy <= max.y; iy++)
                 {
-                    for (var iz = -zMin; iz <= zSize; iz++)
+                    for (var iz = -min.z; iz <= max.z; iz++)
                     {
-                        if(_freeChunks.Count == 0)return;
+                        if(_freeChunks.Count == 0) return;
 
                         var currentPos = origin + new int3(ix, iy, iz);
 
@@ -225,11 +260,6 @@ namespace MaximovInk.VoxelEngine
         {
             _chunkLastUsed = null;
             _chunkCachedPos = new(int.MaxValue, int.MaxValue, int.MaxValue);
-        }
-
-        private void UnloadChunk(VoxelChunk chunk)
-        {
-            _chunksCache.Remove(chunk.Position);
         }
 
         public VoxelChunk UnloadChunk(int3 position)
