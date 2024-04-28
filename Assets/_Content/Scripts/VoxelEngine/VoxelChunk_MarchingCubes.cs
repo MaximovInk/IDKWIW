@@ -223,6 +223,9 @@ namespace MaximovInk.VoxelEngine
             _currentJob.valuesForwardRightTop.Dispose();
             _currentJob.valuesForwardTop.Dispose();
 
+            _currentJob._data.Dispose();
+            _currentJob._values.Dispose();
+
             _mesh.Clear();
 
             _mesh.SetVertices(_currentJob.OutputVertices.AsArray());

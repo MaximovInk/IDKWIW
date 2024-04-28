@@ -53,7 +53,7 @@ namespace MaximovInk.VoxelEngine
         public const int ChunkSize = 16;
         public const int HalfChunkSize = ChunkSize / 2;
         public const int DoubleChunkSize = ChunkSize * 2;
-        public const float BlockSize = 2;
+        public const float BlockSize = 3;
 
 
         public const float ChunkBlockSize = BlockSize * ChunkSize;
