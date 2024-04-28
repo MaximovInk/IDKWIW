@@ -67,6 +67,38 @@ namespace MaximovInk.VoxelEngine
 
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int ValidateLodValue(int value)
+        {
+            var limit = VoxelTerrain.ChunkSize;
+
+            if (value <= 1)
+            {
+                value = 1;
+                return value;
+            }
+
+            if (value > limit)
+            {
+                value = limit;
+                return value;
+            }
+
+            if (value is 16 or 8 or 4 or 2)
+                return value;
+
+            if (value > 16)
+                value = 16;
+            else if (value > 8)
+                value = 8;
+            else if (value > 4)
+                value = 4;
+            else
+                value = 2;
+
+            return value;
+        }
+
         private static void DrawBox(Vector3 pos, Quaternion rot, Vector3 scale, Color c)
         {
             // create matrix

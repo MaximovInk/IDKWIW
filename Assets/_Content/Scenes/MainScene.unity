@@ -7266,18 +7266,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 22324ad5754501c4d9da4f5cd7a42589, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ChunkSize:
-    x: 16
-    y: 16
-    z: 16
-  BlockSize:
-    x: 2
-    y: 2
-    z: 2
+  Target: {fileID: 1159980592}
   IsoLevel: 25
   FlatShading: 1
   _material: {fileID: 2100000, guid: aad58c289d9dc6547813f08d3b5b17cf, type: 2}
   _allocateChunkCount: 100
+  _lodSettings:
+    LODs:
+    - LOD: 16
+      DistanceInChunks: 10
+      DistanceDoubled: 0
+    - LOD: 8
+      DistanceInChunks: 8
+      DistanceDoubled: 0
+    - LOD: 4
+      DistanceInChunks: 4
+      DistanceDoubled: 0
+    - LOD: 2
+      DistanceInChunks: 2
+      DistanceDoubled: 0
+    - LOD: 1
+      DistanceInChunks: 0
+      DistanceDoubled: 0
+    Delay: 0.05
+    _timer: 0
+    LODFreeChunk: 4
+  _loaderSettings:
+    ChunkAroundUpdate:
+      x: 4
+      y: 1
+      z: 4
 --- !u!4 &1472512349
 Transform:
   m_ObjectHideFlags: 0
@@ -7328,7 +7346,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1472512347}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 36bc0d31bb24c2044874ce60c98bbe49, type: 3}
   m_Name: 
@@ -7338,14 +7356,19 @@ MonoBehaviour:
   LODs:
   - LOD: 16
     DistanceInChunks: 10
+    DistanceDoubled: 0
   - LOD: 8
     DistanceInChunks: 8
+    DistanceDoubled: 0
   - LOD: 4
     DistanceInChunks: 4
+    DistanceDoubled: 0
   - LOD: 2
     DistanceInChunks: 2
+    DistanceDoubled: 0
   - LOD: 1
     DistanceInChunks: 0
+    DistanceDoubled: 0
   _lodFreeChunk: 4
   _chunkAroundUpdate:
     x: 4
@@ -8695,6 +8718,10 @@ MonoBehaviour:
     z: 0
   Terrain: {fileID: 0}
   _lod: 0
+  IsFree: 1
+  _isEmpty: 0
+  _isFull: 0
+  DistanceToTarget: 0
 --- !u!23 &1654016151
 MeshRenderer:
   m_ObjectHideFlags: 0

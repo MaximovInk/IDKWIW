@@ -1,11 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
 
 namespace MaximovInk.VoxelEngine
 {
+    [System.Serializable]
+    public struct ChunkLODParameter
+    {
+        public int LOD;
+        public float DistanceInChunks;
+
+        [SerializeField, HideInInspector]
+        public float DistanceDoubled;
+    }
+
+    [System.Serializable]
+    public struct VoxelTerrainLODSettings
+    {
+        public ChunkLODParameter[] LODs;
+
+       
+
+        public float Delay;
+
+        [HideInInspector]
+        public float _timer;
+
+        public int LODFreeChunk;
+    }
+
+    [System.Serializable]
+    public struct VoxelTerrainLoaderSettings
+    {
+        public int3 ChunkAroundUpdate;
+    }
+
     public class VoxelTerrain : MonoBehaviour
     {
         public event Action<VoxelChunk> OnChunkLoaded;
@@ -15,6 +47,8 @@ namespace MaximovInk.VoxelEngine
         public const int DoubleChunkSize = ChunkSize * 2;
         public const int BlockSize = 2;
         public const int ChunkBlockSize = BlockSize * ChunkSize;
+
+        public Transform Target;
 
         [Range(0,255)]
         public byte IsoLevel = 2;
@@ -36,6 +70,12 @@ namespace MaximovInk.VoxelEngine
         [SerializeField]
         private int _allocateChunkCount;
 
+        public VoxelTerrainLODSettings LODSettings => _lodSettings;
+        [SerializeField] private VoxelTerrainLODSettings _lodSettings;
+        [SerializeField] private VoxelTerrainLoaderSettings _loaderSettings;
+
+        private Stack<VoxelChunk> _freeChunks = new Stack<VoxelChunk>();
+
         private void Awake()
         {
             for (int i = 0; i < _allocateChunkCount; i++)
@@ -43,23 +83,153 @@ namespace MaximovInk.VoxelEngine
                 AllocateChunk(new int3(256+i, 0, 0));
             }
 
+            CacheLODSettings();
         }
 
-        public void UpdateImmediately()
+        private void CacheLODSettings()
         {
-            BuildChunkCache();
-            foreach (var chunk in _chunksCache)
+            for (int i = 0; i < _lodSettings.LODs.Length; i++)
             {
-                chunk.Value.UpdateImmediately();
+                var lod = _lodSettings.LODs[i];
+                lod.DistanceDoubled = lod.DistanceInChunks * lod.DistanceDoubled;
+                _lodSettings.LODs[i] = lod;
+            }
+
+            _lodSettings.LODs = _lodSettings.LODs.OrderByDescending(n => n.DistanceInChunks).ToArray();
+        }
+
+        private void Update()
+        {
+            _lodSettings._timer += Time.deltaTime;
+
+            if (_lodSettings._timer > _lodSettings.Delay)
+            {
+                _lodSettings._timer = 0f;
+
+                UpdateChunksState();
+
+                LoadAroundChunks();
             }
         }
 
+        private void UpdateChunksState()
+        {
+            if(_chunksCache.Count == 0)return;
+            if (Target == null) return;
+
+            //SortChunksByLod();
+
+            _freeChunks.Clear();
+
+            foreach (var chunk in _chunksCache.Values)
+            {
+                var changed = UpdateChunkLOD(chunk);
+
+                chunk.IsFree = chunk.LOD >= _lodSettings.LODFreeChunk;
+
+                if(chunk.IsFree)
+                    _freeChunks.Push(chunk);
+
+                if (changed) return;
+            }
+        }
+
+        private bool UpdateChunkLOD(VoxelChunk chunk)
+        {
+            var distance = Vector3.Distance(chunk.transform.position, Target.transform.position) /
+                           ChunkBlockSize;
+
+            chunk.DistanceToTarget = distance;
+
+
+            int lod = 1;
+
+            for (int i = 0; i < _lodSettings.LODs.Length; i++)
+            {
+                if (distance >= _lodSettings.LODs[i].DistanceInChunks)
+                {
+                    lod = _lodSettings.LODs[i].LOD;
+                    break;
+                }
+            }
+
+            lod = VoxelUtility.ValidateLodValue(lod);
+
+
+            if (chunk.LOD != lod)
+            {
+                chunk.LOD = lod;
+                _lodSettings._timer = _lodSettings.Delay / 1.2f;
+
+                return true;
+            }
+
+
+            return false;
+        }
+
+        private void LoadAroundChunks()
+        {
+            if (Target == null) return;
+            if (_freeChunks.Count == 0) return;
+
+            var chunkAroundUpdate = _loaderSettings.ChunkAroundUpdate;
+
+            var xSize = Mathf.CeilToInt(chunkAroundUpdate.x / 2f);
+            var ySize = chunkAroundUpdate.y;
+            var zSize = Mathf.CeilToInt(chunkAroundUpdate.z / 2f);
+
+            var xMin = chunkAroundUpdate.x - xSize;
+            //var yMin = _chunkAroundUpdate.y - ySize;
+            var zMin = chunkAroundUpdate.z - zSize;
+
+            var origin = WorldToChunkPosition(Target.position);
+
+            for (var ix = -xMin; ix <= xSize; ix++)
+            {
+                for (var iy = -1; iy <= ySize; iy++)
+                {
+                    for (var iz = -zMin; iz <= zSize; iz++)
+                    {
+                        if(_freeChunks.Count == 0)return;
+
+                        var currentPos = origin + new int3(ix, iy, iz);
+
+                        if (GetChunkByPos(currentPos, false) != null) continue;
+
+                        var freeChunk = _freeChunks.Pop();
+
+                        if (freeChunk == null) return;
+
+                        freeChunk.IsFree = false;
+
+                        if (UnloadChunk(freeChunk.Position) != freeChunk)
+                        {
+                            Debug.Log("ERROReee");
+                        }
+
+                        freeChunk.Position = currentPos;
+
+                        LoadChunk(currentPos, freeChunk);
+
+                    }
+                }
+            }
+
+        }
+
         #region ChunkManipulation
+
 
         private void ClearLastCacheUsed()
         {
             _chunkLastUsed = null;
             _chunkCachedPos = new(int.MaxValue, int.MaxValue, int.MaxValue);
+        }
+
+        private void UnloadChunk(VoxelChunk chunk)
+        {
+            _chunksCache.Remove(chunk.Position);
         }
 
         public VoxelChunk UnloadChunk(int3 position)
@@ -289,6 +459,15 @@ namespace MaximovInk.VoxelEngine
         }
 
         #endregion
+
+        public void UpdateImmediately()
+        {
+            BuildChunkCache();
+            foreach (var chunk in _chunksCache)
+            {
+                chunk.Value.UpdateImmediately();
+            }
+        }
 
         public void Clear()
         {

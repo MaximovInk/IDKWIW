@@ -15,6 +15,8 @@ namespace MaximovInk.VoxelEngine
 
         private MeshDataStruct _meshData;
 
+        public float DistanceToTarget;
+
         public void ClearMesh()
         {
             _mesh.Clear();
@@ -35,6 +37,8 @@ namespace MaximovInk.VoxelEngine
             ApplyMaterials();
 
             _isDirty = true;
+
+            DistanceToTarget = float.MaxValue;
         }
 
         private void ApplyMesh()

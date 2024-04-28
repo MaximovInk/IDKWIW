@@ -95,8 +95,7 @@ namespace MaximovInk.IDKWIW
 
             if (IsOwner)
             {
-                FindObjectOfType<ChunksLoader>().Target = transform;
-
+                FindObjectOfType<VoxelTerrain>().Target = transform;
             }
         }
 
