@@ -16,6 +16,7 @@ namespace MaximovInk.VoxelEngine
         private NativeList<float3> _outputNormals;
         private NativeList<float4> _outputColors;
         private NativeList<int> _outputTriangles;
+        private NativeList<float2> _outputUvs;
 
         private NativeArray<float4> _blockColors;
 
@@ -40,6 +41,7 @@ namespace MaximovInk.VoxelEngine
             _outputNormals = new NativeList<float3>(0, Allocator.Persistent);
             _outputColors = new NativeList<float4>(0, Allocator.Persistent);
             _outputTriangles = new NativeList<int>(0, Allocator.Persistent);
+            _outputUvs = new NativeList<float2>(0, Allocator.Persistent);
         }
 
         private void OnMarchingCubesDestroy()
@@ -53,6 +55,7 @@ namespace MaximovInk.VoxelEngine
             _outputTriangles.Dispose();
             _outputVertices.Dispose();
             _outputNormals.Dispose();
+            _outputUvs.Dispose();
         }
 
         private JobHandle _handle;
@@ -79,6 +82,7 @@ namespace MaximovInk.VoxelEngine
             _outputVertices.Clear();
             _outputTriangles.Clear();
             _outputNormals.Clear();
+            _outputUvs.Clear();
 
             _currentJob = new MarchingCubesJob
             {
@@ -94,7 +98,8 @@ namespace MaximovInk.VoxelEngine
                 OutputVertices = _outputVertices,
                 OutputNormals = _outputNormals,
                 OutputColors = _outputColors,
-                OutputTriangles = _outputTriangles
+                OutputTriangles = _outputTriangles,
+                OutputUVs = _outputUvs
             };
 
             _currentJob.valuesForward = _neighbors.Forward != null && !_neighbors.Forward.IsEmpty() ? new NativeArray<byte>(_neighbors.Forward._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
@@ -137,6 +142,7 @@ namespace MaximovInk.VoxelEngine
             _mesh.SetNormals(_currentJob.OutputNormals.AsArray());
             _mesh.SetColors(_currentJob.OutputColors.AsArray());
             _mesh.SetIndices(_currentJob.OutputTriangles.AsArray(), MeshTopology.Triangles, 0);
+            _mesh.SetUVs(2, _outputUvs.AsArray());
 
             // if (!Terrain.FlatShading)
             //_mesh.RecalculateNormals(180, 0.5f);

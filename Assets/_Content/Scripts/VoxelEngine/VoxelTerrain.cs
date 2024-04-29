@@ -4,6 +4,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using Unity.Mathematics;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -89,7 +90,7 @@ namespace MaximovInk.VoxelEngine
         [SerializeField] private VoxelTerrainLODSettings _lodSettings;
         [SerializeField] private VoxelTerrainLoaderSettings _loaderSettings;
 
-        private Stack<VoxelChunk> _freeChunks = new Stack<VoxelChunk>();
+        private readonly Stack<VoxelChunk> _freeChunks = new();
 
         private void Awake()
         {
@@ -354,25 +355,53 @@ namespace MaximovInk.VoxelEngine
 
             OnChunkLoaded?.Invoke(chunk);
 
+            UpdateNearestChunks(position);
+
+            return true;
+        }
+
+        private void UpdateNearestChunks(int3 position)
+        {
             for (int ix = -1; ix <= 0; ix++)
             {
                 for (int iy = -1; iy <= 0; iy++)
                 {
                     for (int iz = -1; iz <= 0; iz++)
                     {
-                        if(ix == 0 && iy == 0 && iz == 0)continue;
+                        if (ix == 0 && iy == 0 && iz == 0) continue;
 
-                        var ch = GetChunkByPos(position + new int3(ix,iy,iz),false);
+                        var ch = GetChunkByPos(position + new int3(ix, iy, iz), false);
 
-                        if(ch == null) continue;
+                        if (ch == null) continue;
 
                         ch.SetIsDirty();
                     }
-                }   
+                }
             }
 
-            return true;
         }
+
+        private void UpdateNearestChunks(int3 position, int3 min, int3 max)
+        {
+            for (int ix = min.x; ix <= max.x; ix++)
+            {
+                for (int iy = min.y; iy <= max.y; iy++)
+                {
+                    for (int iz = min.z; iz <= max.z; iz++)
+                    {
+                        if (ix == 0 && iy == 0 && iz == 0) continue;
+
+                        var ch = GetChunkByPos(position + new int3(ix, iy, iz), false);
+
+                        if (ch == null) continue;
+
+                        ch.SetIsDirty();
+                    }
+                }
+            }
+
+        }
+
 
         private void BuildChunkCache()
         {
@@ -454,18 +483,52 @@ namespace MaximovInk.VoxelEngine
             return VoxelDatabase.GetID(blockID);
         }
 
+        private void UpdateNearestChunksIfNeed(int3 chunkPos, int3 positionInChunk)
+        {
+            var min = int3.zero;
+            var max = int3.zero;
+
+            if (positionInChunk.x == 0)
+                min.x = -1;
+            else if (positionInChunk.x == ChunkSize - 1)
+                max.x = 1;
+
+            if (positionInChunk.y == 0)
+                min.y = -1;
+            else if(positionInChunk.y == ChunkSize - 1)
+                max.y = 1;
+            
+            if(positionInChunk.z == 0)
+                min.z = -1;
+            else if(positionInChunk.z == ChunkSize - 1)
+                max.z = 1;
+
+            if (math.all(min == int3.zero) && math.all(max == int3.zero))
+                return;
+
+            UpdateNearestChunks(chunkPos, min, max);
+
+        }
+
         public bool SetBlock(string blockID, int3 position)
         {
             var chunk = GetOrCreateChunk(position);
 
-            if (string.IsNullOrEmpty(blockID))
-            {
-                return chunk.SetBlock(0, PositionToChunk(position));
-            }
+            var index = string.IsNullOrEmpty(blockID) ? 0 : VoxelDatabase.GetID(blockID);
 
-            var index = VoxelDatabase.GetID(blockID);
+            var chunkInsideGridPos = PositionToChunk(position);
 
-            return chunk.SetBlock((ushort)(index), PositionToChunk(position));
+            var changed = chunk.SetBlock((ushort)(index), chunkInsideGridPos);
+
+            if (!changed) return false;
+
+            
+
+            var chunkPos = GridToChunk(position);
+
+            UpdateNearestChunksIfNeed(chunkPos, chunkInsideGridPos);
+
+            return true;
         }
 
         public ushort GetBlock(int3 position)
@@ -505,7 +568,7 @@ namespace MaximovInk.VoxelEngine
         }
 
         private int3 GridToChunk(int3 gridPos)
-        {
+        {       
             var chunkX = (gridPos.x < 0 ? (gridPos.x + 1 - ChunkSize) : gridPos.x) / ChunkSize;
             var chunkY = (gridPos.y < 0 ? (gridPos.y + 1 - ChunkSize) : gridPos.y) / ChunkSize;
             var chunkZ = (gridPos.z < 0 ? (gridPos.z + 1 - ChunkSize) : gridPos.z) / ChunkSize;

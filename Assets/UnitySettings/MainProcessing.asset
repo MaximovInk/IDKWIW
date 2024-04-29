@@ -1,61 +1,5 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!114 &-7264757371522457277
-MonoBehaviour:
-  m_ObjectHideFlags: 3
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cbb66dc641fe8ef4c843eb98a8fa4058, type: 3}
-  m_Name: FullScreenFog
-  m_EditorClassIdentifier: 
-  active: 0
-  mode:
-    m_OverrideState: 1
-    m_Value: 0
-  intensity:
-    m_OverrideState: 1
-    m_Value: 1
-  color:
-    m_OverrideState: 1
-    m_Value: {r: 0.064472064, g: 0.57487565, b: 0.865, a: 1}
-  densityMode:
-    m_OverrideState: 1
-    m_Value: 2
-  startLine:
-    m_OverrideState: 1
-    m_Value: 211.7
-  endLine:
-    m_OverrideState: 0
-    m_Value: 10
-  startHeight:
-    m_OverrideState: 1
-    m_Value: -12.9
-  endHeight:
-    m_OverrideState: 0
-    m_Value: 0
-  density:
-    m_OverrideState: 1
-    m_Value: 0.04
-  noiseMode:
-    m_OverrideState: 1
-    m_Value: 1
-  noiseTexture:
-    m_OverrideState: 0
-    m_Value: {fileID: 0}
-    dimension: 1
-  noiseIntensity:
-    m_OverrideState: 1
-    m_Value: 1
-  noiseScale:
-    m_OverrideState: 1
-    m_Value: 1.76
-  noiseScrollSpeed:
-    m_OverrideState: 0
-    m_Value: {x: 1, y: 1}
 --- !u!114 &-222519711308997368
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -93,7 +37,6 @@ MonoBehaviour:
   - {fileID: 6007757391195851314}
   - {fileID: -222519711308997368}
   - {fileID: 5283638207582880007}
-  - {fileID: -7264757371522457277}
 --- !u!114 &1147161722249860728
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -332,7 +275,7 @@ MonoBehaviour:
     m_Value: -0.74
   contrast:
     m_OverrideState: 1
-    m_Value: 18.8
+    m_Value: 6
   colorFilter:
     m_OverrideState: 0
     m_Value: {r: 1, g: 1, b: 1, a: 1}
@@ -341,7 +284,7 @@ MonoBehaviour:
     m_Value: -180
   saturation:
     m_OverrideState: 1
-    m_Value: 37.5
+    m_Value: 24.89
 --- !u!114 &6007757391195851314
 MonoBehaviour:
   m_ObjectHideFlags: 3

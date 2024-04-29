@@ -1840,7 +1840,7 @@ Light:
   m_LightShadowCasterMode: 0
   m_AreaSize: {x: 1, y: 1}
   m_BounceIntensity: 1
-  m_ColorTemperature: 5000
+  m_ColorTemperature: 7950
   m_UseColorTemperature: 1
   m_BoundingSphereOverride: {x: 0, y: 0, z: 0, w: 0}
   m_UseBoundingSphereOverride: 0
@@ -7268,7 +7268,7 @@ MonoBehaviour:
   Target: {fileID: 1159980592}
   IsoLevel: 25
   FlatShading: 0
-  _material: {fileID: 2100000, guid: aad58c289d9dc6547813f08d3b5b17cf, type: 2}
+  _material: {fileID: 2100000, guid: f933e32f6eec38949840decad10acd78, type: 2}
   _allocateChunkCount: 512
   _lodSettings:
     LODs:
@@ -7348,8 +7348,6 @@ MonoBehaviour:
     FromHeight: 0
   _amplitude: 40
   _seed: 434
-  _genDelay: 0.2
-  _minY: 1
   FlatShading: 1
 --- !u!1 &1484472641
 GameObject:
@@ -7630,37 +7628,6 @@ Transform:
     type: 3}
   m_PrefabInstance: {fileID: 1769499825}
   m_PrefabAsset: {fileID: 0}
---- !u!1 &1499363675
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1499363676}
-  m_Layer: 0
-  m_Name: GameObject
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &1499363676
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1499363675}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -257.77625, y: 17.548487, z: -644.1069}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1001 &1506939449
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -10373,4 +10340,3 @@ SceneRoots:
   - {fileID: 1053348751}
   - {fileID: 1159980592}
   - {fileID: 1267784063}
-  - {fileID: 1499363676}

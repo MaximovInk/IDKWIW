@@ -48,55 +48,10 @@ namespace MaximovInk.VoxelEngine
         public NativeList<float3> OutputVertices;
         public NativeList<float3> OutputNormals;
         public NativeList<float4> OutputColors;
+        public NativeList<float2> OutputUVs;
         public NativeList<int> OutputTriangles;
 
-
-        private bool TryGetForwardValue(int3 pos, out float value)
-        {
-            pos.z -= ChunkSize;
-            var index = VoxelUtility.PosToIndexInt(pos);
-
-            if (index >= valuesForward.Length)
-            {
-                value = 0;
-                return false;
-            }
-
-            value = valuesForward[index];
-            return true;
-        }
-
-        private bool TryGetTopValue(int3 pos, out float value)
-        {
-            pos.y -= ChunkSize;
-            var index = VoxelUtility.PosToIndexInt(pos);
-
-            if (index >= valuesTop.Length)
-            {
-                value = 0;
-                return false;
-            }
-
-            value = valuesTop[index];
-            return true;
-        }
-
-        private bool TryGetRightValue(int3 pos, out float value)
-        {
-            pos.x -= ChunkSize;
-            var index = VoxelUtility.PosToIndexInt(pos);
-
-            if (index >= valuesRight.Length)
-            {
-                value = 0;
-                return false;
-            }
-
-            value = valuesRight[index];
-            return true;
-        }
-
-        private bool TryGetValue(NativeArray<byte> array, int index, out float value)
+        private static bool TryGetValue(NativeArray<byte> array, int index, out float value)
         {
             if (index >= array.Length)
             {
@@ -112,7 +67,6 @@ namespace MaximovInk.VoxelEngine
 
         private bool TryGetOverflowValue(int3 pos, bool right, bool top, bool forward, out float value)
         {
-
             if (right)
                 pos.x -= ChunkSize;
 
@@ -146,7 +100,6 @@ namespace MaximovInk.VoxelEngine
 
         private float GetValue(int3 pos, int currentIndex)
         {
-
             var index = VoxelUtility.PosToIndexInt(pos);
 
             var right = pos.x >= ChunkSize;
@@ -324,6 +277,7 @@ namespace MaximovInk.VoxelEngine
                                     OutputVertices.Add(c);
                                     OutputColors.Add(color);
                                     OutputTriangles.Add(idx);
+                                    OutputUVs.Add(new float2(blockId, 0));
                                 }
 
 
@@ -340,7 +294,7 @@ namespace MaximovInk.VoxelEngine
                                     OutputVertices.Add(a);
                                     OutputColors.Add(color);
                                     OutputTriangles.Add(idx);
-
+                                    OutputUVs.Add(new float2(blockId, 0));
                                 }
 
 
@@ -356,6 +310,7 @@ namespace MaximovInk.VoxelEngine
                                     OutputVertices.Add(b);
                                     OutputColors.Add(color);
                                     OutputTriangles.Add(idx);
+                                    OutputUVs.Add(new float2(blockId, 0));
                                 }
 
 
@@ -378,6 +333,11 @@ namespace MaximovInk.VoxelEngine
                                 OutputColors.Add(color);
                                 OutputColors.Add(color);
                                 OutputColors.Add(color);
+
+                                OutputUVs.Add(new float2(blockId, 0));
+                                OutputUVs.Add(new float2(blockId, 0));
+                                OutputUVs.Add(new float2(blockId, 0));
+
                             }
 
 
