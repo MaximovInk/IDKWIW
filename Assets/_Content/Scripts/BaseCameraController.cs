@@ -14,6 +14,8 @@ public struct CameraLookInput
 
 public class BaseCameraController : NetworkBehaviour
 {
+    public Transform Object => _cameraObject;
+
     public event Action<bool> OnModeChanged;
 
     public float MaxDistance = 7f;
@@ -22,6 +24,8 @@ public class BaseCameraController : NetworkBehaviour
     protected const float MaxAngle = 85f;
 
     public Camera ActiveCamera => _camera;
+
+    [SerializeField]
     protected Camera _camera;
 
     [SerializeField] protected Vector3 _thirdPersonOffset = new(1, 0.5f, 0);
@@ -60,13 +64,9 @@ public class BaseCameraController : NetworkBehaviour
     [SerializeField] protected float _maxFov;
     [SerializeField] protected float _fovVelocityMax;
 
-
-
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
-
-        _camera = _cameraObject.GetComponentInChildren<Camera>();
         _initPosition = _cameraObject.transform.localPosition;
         _isFirstPerson = true;
     }
@@ -95,6 +95,8 @@ public class BaseCameraController : NetworkBehaviour
         {
             if (currentInput.ScrollDelta != 0f)
                 _distance += currentInput.ScrollDelta;
+
+            
 
             _thirdPersonOffsetTarget = Vector3.Lerp(_thirdPersonOffsetTarget,
                 currentInput.LookAround ? Vector3.zero : _thirdPersonOffset, Time.deltaTime * 20f);
@@ -168,6 +170,8 @@ public class BaseCameraController : NetworkBehaviour
     
     private void LateUpdate()
     {
+        if (!IsSpawned) return;
+
         if (_target == null) return;
 
         if (_isFirstPerson)

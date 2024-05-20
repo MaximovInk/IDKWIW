@@ -313,7 +313,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8c870d7c4b72734f83f17532f1ea823, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  Collider: {fileID: 0}
   _speed: 10
   _sprintMultiplier: 1.5
   _crouchMultiplier: 0.7
@@ -491,6 +490,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   MaxDistance: 7
   MinDistance: 1
+  _camera: {fileID: 2848692138267588112}
   _thirdPersonOffset: {x: 1, y: 0.5, z: 0}
   _wallMask:
     serializedVersion: 2

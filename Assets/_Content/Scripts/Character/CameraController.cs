@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace MaximovInk.IDKWIW
 {
@@ -57,19 +56,20 @@ namespace MaximovInk.IDKWIW
         {
             base.OnNetworkSpawn();
 
+            _controller = GetComponent<CharacterController>();
+            _initPosition = _cameraObject.transform.localPosition;
+
             if (!IsOwner)
             {
                 _cameraObject.gameObject.SetActive(false);
                 return;
             }
 
-            _controller = GetComponent<CharacterController>();
-            _initPosition = _cameraObject.transform.localPosition;
-
             _controller.OnInputEvent += CharacterController_OnInputEvent;
             _controller.OnCrouch += Controller_OnCrouch;
 
             _target = _controller.transform;
+
         }
 
         private void Controller_OnCrouch(bool obj)

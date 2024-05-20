@@ -101,7 +101,13 @@ namespace MaximovInk.IDKWIW
 
             input.IsInvokeInteract = Input.GetKeyDown(KeyCode.E);
 
-            input.QuitVehicle = Input.GetKeyDown(KeyCode.Escape);
+            input.QuitVehicle = Input.GetKeyDown(KeyCode.G);
+
+            input.VehicleBrake = Input.GetKey(KeyCode.Space);
+
+            if(input.QuitVehicle)
+                Debug.Log("FF");
+            
 
             CurrentInputTarget.HandleInput(input);
 

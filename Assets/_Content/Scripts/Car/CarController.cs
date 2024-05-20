@@ -26,6 +26,8 @@ namespace MaximovInk
 
     public class CarController : NetworkBehaviour, IPlayer
     {
+        public event Action<CharacterInput> OnInput;
+
         [SerializeField] private float _maxAcceleration = 30.0f;
         [SerializeField] private float _brakeAcceleration = 50.0f;
 
@@ -44,17 +46,22 @@ namespace MaximovInk
 
         private Rigidbody _rigidbody;
 
-        private CarCamera _carCamera;
+        [SerializeField] private CarCamera _carCamera;
+
+        private List<CharacterController> _characterControllers = new List<CharacterController>();
 
         private Vector2 _moveInput;
         private bool _invokeBrake;
 
-        private void Awake()
+        public override void OnNetworkSpawn()
         {
+            base.OnNetworkSpawn();
+
             _rigidbody = GetComponent<Rigidbody>();
             _rigidbody.centerOfMass = _centerOfMass;
-
+            
             _carCamera = GetComponentInChildren<CarCamera>();
+            _carCamera.gameObject.SetActive(false);
         }
 
         private void Move()
@@ -79,16 +86,20 @@ namespace MaximovInk
                 _carCamera.gameObject.SetActive(true);
             }
 
+            _characterControllers.Add(controller);
+
         }
 
         public void UnsedPlayer(CharacterController controller)
         {
+            controller.UnsetVehicle();
+
             if (IsOwner)
             {
-                controller.UnsetVehicle();
-
                 _carCamera.gameObject.SetActive(false);
             }
+
+            _characterControllers.Remove(controller);
         }
 
         private void FixedUpdate()
@@ -154,6 +165,24 @@ namespace MaximovInk
             _moveInput = input.MoveValue;
 
             _invokeBrake = input.VehicleBrake;
+
+            //Debug.Log(input.LookValue);
+
+            if (input.QuitVehicle)
+            {
+                for (int i = 0; i < _characterControllers.Count; i++)
+                {
+                    if (_characterControllers[i].IsOwner)
+                    {
+                        UnsedPlayer(_characterControllers[i]);
+                        return;
+                    }
+                }
+
+
+            }
+
+            OnInput?.Invoke(input);
         }
     }
 

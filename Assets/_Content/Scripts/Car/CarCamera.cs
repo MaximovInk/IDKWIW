@@ -1,30 +1,37 @@
 
 using UnityEngine;
 
-namespace MaximovInk
+namespace MaximovInk.IDKWIW
 {
-public class CarCamera : BaseCameraController
-{
-    CameraLookInput input;
-    [SerializeField] private Vector2 _mouseSens = Vector2.one;
-
-    private void Update()
+    public class CarCamera : BaseCameraController
     {
-        input.LookAround = Input.GetKey(KeyCode.LeftAlt);
-        input.InvokeChangeCamera = Input.GetKeyDown(KeyCode.C);
+        public override void OnNetworkSpawn()
+        {
+            base.OnNetworkSpawn();
 
-        input.LookValue = new Vector2(Input.GetAxisRaw("Mouse X") * _mouseSens.x, -Input.GetAxisRaw("Mouse Y") * _mouseSens.y);
+            GetComponentInParent<CarController>().OnInput += CarCamera_OnInput;
+            Debug.Log(GetComponentInParent<CarController>() == null);
+        }
 
-        input.ScrollDelta -= Input.mouseScrollDelta.y;
+        private void CarCamera_OnInput(CharacterInput currentInput)
+        {
+          
 
-        HandleInput(input);
+            HandleInput(new CameraLookInput()
+            {
+                InvokeChangeCamera = currentInput.InvokeChangeCamera,
+                LookAround = currentInput.LookAround,
+                LookValue = currentInput.LookValue,
+                ScrollDelta = currentInput.ScrollDelta
+            });
+        }
+
+
+        protected override bool RotateFirstPersonY()
+        {
+            return true;
+        }
     }
-
-    protected override bool RotateFirstPersonY()
-    {
-        return true;
-    }
-}
 
 
 }

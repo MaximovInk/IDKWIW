@@ -76,7 +76,7 @@ namespace MaximovInk.IDKWIW
         public CharacterInput CurrentInput => _currentInput;
         public Rigidbody Rigidbody => _rigidbody;
 
-        public Collider Collider;
+        public CapsuleCollider Collider => _collider;
 
         [SerializeField] private float _speed = 5f;
         [SerializeField] private float _sprintMultiplier = 2f;
@@ -257,10 +257,7 @@ namespace MaximovInk.IDKWIW
             if (inputValue.IsInvokeJump && IsGround)
                 Jump();
 
-            if (inputValue.QuitVehicle && _currentVehicle != null)
-            {
-                _currentVehicle.UnsedPlayer(this);
-            }
+            
 
             _currentInput = inputValue;
 
@@ -320,10 +317,10 @@ namespace MaximovInk.IDKWIW
         {
             _currentVehicle = controller;
             FreezeRigidbody(true);
-            Collider.enabled = false;
-            CameraController.gameObject.SetActive(false);
+            _collider.enabled = false;
+            CameraController.Object.gameObject.SetActive(false);
 
-            GetComponent<LocalPlayerInput>().CurrentInputTarget = controller;
+            GetComponent<LocalPlayerInput>().CurrentInputTarget = _currentVehicle;
 
         }
 
@@ -331,9 +328,9 @@ namespace MaximovInk.IDKWIW
         {
             GetComponent<LocalPlayerInput>().CurrentInputTarget = GetComponent<Player>();
             FreezeRigidbody(false);
-            Collider.enabled = true;
+            _collider.enabled = true;
 
-            CameraController.gameObject.SetActive(true);
+            CameraController.Object.gameObject.SetActive(true);
 
             _currentVehicle = null;
         }
