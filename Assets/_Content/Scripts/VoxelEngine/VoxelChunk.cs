@@ -1,4 +1,5 @@
-﻿using Unity.Mathematics;
+﻿using System;
+using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
 
@@ -7,6 +8,8 @@ namespace MaximovInk.VoxelEngine
     [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer), typeof(MeshCollider))]
     public partial class VoxelChunk : MonoBehaviour
     {
+        public event Action OnMeshGenerated;
+
         public const int ChunkSize = VoxelTerrain.ChunkSize;
         public static float3 BlockSize => VoxelTerrain.BlockSize;
 

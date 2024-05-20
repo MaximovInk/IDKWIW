@@ -46,7 +46,7 @@ Material:
     - _DirectionalPower: 1
     - _ExtraFogHeightEnd: 0
     - _ExtraFogHeightPower: 0.5
-    - _FogDensity: 0.01
+    - _FogDensity: 0.011
     - _FogDensityPower: 1
     - _FogHeightEnd: 30
     - _FogHeightPower: 0.5

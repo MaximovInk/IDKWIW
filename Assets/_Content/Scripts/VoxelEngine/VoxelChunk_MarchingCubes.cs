@@ -20,6 +20,10 @@ namespace MaximovInk.VoxelEngine
 
         private NativeArray<float4> _blockColors;
 
+
+        public NativeList<int> VertexToIndex => _vertexToIndex;
+        private NativeList<int> _vertexToIndex;
+
         private float _isoLevel;
 
         private void InitializeMarchingCubes()
@@ -42,6 +46,7 @@ namespace MaximovInk.VoxelEngine
             _outputColors = new NativeList<float4>(0, Allocator.Persistent);
             _outputTriangles = new NativeList<int>(0, Allocator.Persistent);
             _outputUvs = new NativeList<float2>(0, Allocator.Persistent);
+            _vertexToIndex = new NativeList<int>(0, Allocator.Persistent);
         }
 
         private void OnMarchingCubesDestroy()
@@ -56,6 +61,8 @@ namespace MaximovInk.VoxelEngine
             _outputVertices.Dispose();
             _outputNormals.Dispose();
             _outputUvs.Dispose();
+
+            _vertexToIndex.Dispose();
         }
 
         private JobHandle _handle;
@@ -83,6 +90,7 @@ namespace MaximovInk.VoxelEngine
             _outputTriangles.Clear();
             _outputNormals.Clear();
             _outputUvs.Clear();
+            _vertexToIndex.Clear();
 
             _currentJob = new MarchingCubesJob
             {
@@ -99,6 +107,7 @@ namespace MaximovInk.VoxelEngine
                 OutputNormals = _outputNormals,
                 OutputColors = _outputColors,
                 OutputTriangles = _outputTriangles,
+                VertexToIndex = _vertexToIndex,
                 OutputUVs = _outputUvs
             };
 
@@ -150,6 +159,8 @@ namespace MaximovInk.VoxelEngine
             _meshCollider.sharedMesh = _mesh.vertexCount == 0 ? null : _mesh;
 
             _isRunning = false;
+
+            OnMeshGenerated?.Invoke();
         }
 
         private void CacheNeighbors()

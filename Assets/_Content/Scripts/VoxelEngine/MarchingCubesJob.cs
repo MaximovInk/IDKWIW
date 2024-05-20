@@ -1,13 +1,8 @@
-﻿using System;
-using Unity.Burst;
+﻿using Unity.Burst;
 using Unity.Collections;
 using Unity.Jobs;
 using Unity.Mathematics;
 using UnityEngine;
-using UnityEngine.Animations.Rigging;
-using static UnityEditor.PlayerSettings;
-using static UnityEngine.Mesh;
-using static UnityEngine.Rendering.DebugUI;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -26,7 +21,7 @@ namespace MaximovInk.VoxelEngine
         public NativeArray<byte> valuesTopRight;
         public NativeArray<byte> valuesForwardRight;
         public NativeArray<byte> valuesForwardTop;
-
+ 
         public int lod;
         public bool smoothing;
 
@@ -50,6 +45,7 @@ namespace MaximovInk.VoxelEngine
         public NativeList<float4> OutputColors;
         public NativeList<float2> OutputUVs;
         public NativeList<int> OutputTriangles;
+        public NativeList<int> VertexToIndex;
 
         private static bool TryGetValue(NativeArray<byte> array, int index, out float value)
         {
@@ -278,6 +274,7 @@ namespace MaximovInk.VoxelEngine
                                     OutputColors.Add(color);
                                     OutputTriangles.Add(idx);
                                     OutputUVs.Add(new float2(blockId, 0));
+                                    VertexToIndex.Add(index);
                                 }
 
 
@@ -295,6 +292,8 @@ namespace MaximovInk.VoxelEngine
                                     OutputColors.Add(color);
                                     OutputTriangles.Add(idx);
                                     OutputUVs.Add(new float2(blockId, 0));
+
+                                    VertexToIndex.Add(index);
                                 }
 
 
@@ -311,6 +310,8 @@ namespace MaximovInk.VoxelEngine
                                     OutputColors.Add(color);
                                     OutputTriangles.Add(idx);
                                     OutputUVs.Add(new float2(blockId, 0));
+
+                                    VertexToIndex.Add(index);
                                 }
 
 
@@ -338,6 +339,11 @@ namespace MaximovInk.VoxelEngine
                                 OutputUVs.Add(new float2(blockId, 0));
                                 OutputUVs.Add(new float2(blockId, 0));
 
+
+                                VertexToIndex.Add(index);
+                                VertexToIndex.Add(index);
+                                VertexToIndex.Add(index);
+
                             }
 
 
@@ -349,7 +355,6 @@ namespace MaximovInk.VoxelEngine
 
 
         }
-
 
         private static readonly int3[] offsets = new int3[]
  {

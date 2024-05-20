@@ -1,5 +1,45 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-4763553058102092015
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97c23e3b12dc18c42a140437e53d3951, type: 3}
+  m_Name: Tonemapping
+  m_EditorClassIdentifier: 
+  active: 1
+  mode:
+    m_OverrideState: 1
+    m_Value: 1
+  neutralHDRRangeReductionMode:
+    m_OverrideState: 0
+    m_Value: 2
+  acesPreset:
+    m_OverrideState: 0
+    m_Value: 3
+  hueShiftAmount:
+    m_OverrideState: 0
+    m_Value: 0
+  detectPaperWhite:
+    m_OverrideState: 0
+    m_Value: 0
+  paperWhite:
+    m_OverrideState: 0
+    m_Value: 300
+  detectBrightnessLimits:
+    m_OverrideState: 0
+    m_Value: 1
+  minNits:
+    m_OverrideState: 0
+    m_Value: 0.005
+  maxNits:
+    m_OverrideState: 0
+    m_Value: 1000
 --- !u!114 &-222519711308997368
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -15,7 +55,7 @@ MonoBehaviour:
   active: 1
   temperature:
     m_OverrideState: 1
-    m_Value: -7.1
+    m_Value: 11
   tint:
     m_OverrideState: 0
     m_Value: 0
@@ -34,9 +74,9 @@ MonoBehaviour:
   components:
   - {fileID: 5978501777536879610}
   - {fileID: 1147161722249860728}
-  - {fileID: 6007757391195851314}
   - {fileID: -222519711308997368}
-  - {fileID: 5283638207582880007}
+  - {fileID: -4763553058102092015}
+  - {fileID: 6007757391195851314}
 --- !u!114 &1147161722249860728
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -53,7 +93,7 @@ MonoBehaviour:
   master:
     m_OverrideState: 1
     m_Value:
-      <length>k__BackingField: 3
+      <length>k__BackingField: 4
       m_Loop: 0
       m_ZeroValue: 0
       m_Range: 1
@@ -63,15 +103,24 @@ MonoBehaviour:
         - serializedVersion: 3
           time: 0
           value: 0
-          inSlope: 1.4164593
-          outSlope: 1.4164593
+          inSlope: 0.9943071
+          outSlope: 0.9943071
           tangentMode: 0
           weightedMode: 0
           inWeight: 0
           outWeight: 0
         - serializedVersion: 3
-          time: 0.76233184
-          value: 0.7934272
+          time: 0.19338423
+          value: 0.13978493
+          inSlope: 0.87001884
+          outSlope: 0.87001884
+          tangentMode: 0
+          weightedMode: 0
+          inWeight: 0
+          outWeight: 0
+        - serializedVersion: 3
+          time: 0.82951653
+          value: 0.7688172
           inSlope: 0.89738417
           outSlope: 0.89738417
           tangentMode: 0
@@ -91,7 +140,7 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 4
   red:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value:
       <length>k__BackingField: 2
       m_Loop: 0
@@ -103,8 +152,8 @@ MonoBehaviour:
         - serializedVersion: 3
           time: 0
           value: 0
-          inSlope: 1
-          outSlope: 1
+          inSlope: 1.0233858
+          outSlope: 1.0233858
           tangentMode: 0
           weightedMode: 0
           inWeight: 0
@@ -112,8 +161,8 @@ MonoBehaviour:
         - serializedVersion: 3
           time: 1
           value: 1
-          inSlope: 1
-          outSlope: 1
+          inSlope: 0.61073023
+          outSlope: 0.61073023
           tangentMode: 0
           weightedMode: 0
           inWeight: 0
@@ -122,7 +171,7 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 4
   green:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value:
       <length>k__BackingField: 2
       m_Loop: 0
@@ -132,19 +181,19 @@ MonoBehaviour:
         serializedVersion: 2
         m_Curve:
         - serializedVersion: 3
-          time: 0
+          time: 0.01724138
           value: 0
-          inSlope: 1
-          outSlope: 1
+          inSlope: 0.83037925
+          outSlope: 0.83037925
           tangentMode: 0
           weightedMode: 0
           inWeight: 0
           outWeight: 0
         - serializedVersion: 3
           time: 1
-          value: 1
-          inSlope: 1
-          outSlope: 1
+          value: 0.97409326
+          inSlope: 1.3386719
+          outSlope: 1.3386719
           tangentMode: 0
           weightedMode: 0
           inWeight: 0
@@ -153,7 +202,7 @@ MonoBehaviour:
         m_PostInfinity: 2
         m_RotationOrder: 4
   blue:
-    m_OverrideState: 0
+    m_OverrideState: 1
     m_Value:
       <length>k__BackingField: 2
       m_Loop: 0
@@ -165,8 +214,8 @@ MonoBehaviour:
         - serializedVersion: 3
           time: 0
           value: 0
-          inSlope: 1
-          outSlope: 1
+          inSlope: 1.3222799
+          outSlope: 1.3222799
           tangentMode: 0
           weightedMode: 0
           inWeight: 0
@@ -174,8 +223,8 @@ MonoBehaviour:
         - serializedVersion: 3
           time: 1
           value: 1
-          inSlope: 1
-          outSlope: 1
+          inSlope: 1.3805052
+          outSlope: 1.3805052
           tangentMode: 0
           weightedMode: 0
           inWeight: 0
@@ -235,28 +284,6 @@ MonoBehaviour:
         m_PreInfinity: 2
         m_PostInfinity: 2
         m_RotationOrder: 4
---- !u!114 &5283638207582880007
-MonoBehaviour:
-  m_ObjectHideFlags: 3
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 70afe9e12c7a7ed47911bb608a23a8ff, type: 3}
-  m_Name: SplitToning
-  m_EditorClassIdentifier: 
-  active: 1
-  shadows:
-    m_OverrideState: 1
-    m_Value: {r: 0.4504717, g: 0.45473647, b: 0.5, a: 1}
-  highlights:
-    m_OverrideState: 1
-    m_Value: {r: 0.509434, g: 0.509434, b: 0.509434, a: 1}
-  balance:
-    m_OverrideState: 0
-    m_Value: 70.5
 --- !u!114 &5978501777536879610
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -272,19 +299,19 @@ MonoBehaviour:
   active: 1
   postExposure:
     m_OverrideState: 1
-    m_Value: -0.74
+    m_Value: -0.3
   contrast:
     m_OverrideState: 1
-    m_Value: 6
+    m_Value: -21
   colorFilter:
     m_OverrideState: 0
-    m_Value: {r: 1, g: 1, b: 1, a: 1}
+    m_Value: {r: 0.92012244, g: 1, b: 0.8820755, a: 1}
   hueShift:
     m_OverrideState: 0
     m_Value: -180
   saturation:
     m_OverrideState: 1
-    m_Value: 24.89
+    m_Value: 20
 --- !u!114 &6007757391195851314
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -300,7 +327,7 @@ MonoBehaviour:
   active: 1
   distance:
     m_OverrideState: 1
-    m_Value: 0.384
+    m_Value: 0.066
   cropToFit:
     m_OverrideState: 0
     m_Value: 1

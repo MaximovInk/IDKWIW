@@ -7,6 +7,62 @@ namespace MaximovInk.IDKWIW
 {
     public class CharacterController : NetworkBehaviour
     {
+        public Camera Camera => CameraController.ActiveCamera;
+
+        public CharacterGraphics Graphics { get
+            {
+                if(_graphics == null)
+                    _graphics = GetComponent<CharacterGraphics>();
+                return _graphics;
+            } }
+        private CharacterGraphics _graphics;
+
+        public CharacterAnimator Animator { get
+            {
+                if (_animator == null)
+                    _animator = GetComponent<CharacterAnimator>();
+                return _animator;
+
+            } }
+        private CharacterAnimator _animator;
+
+        public CameraController CameraController
+        {
+            get
+            {
+                if (_cameraController == null)
+                    _cameraController = GetComponent<CameraController>();
+                return _cameraController;
+
+            }
+        }
+        private CameraController _cameraController;
+
+        public CharacterWeaponSystem WeaponSystem
+        {
+            get
+            {
+                if (_weaponSystem == null)
+                    _weaponSystem = GetComponent<CharacterWeaponSystem>();
+                return _weaponSystem;
+
+            }
+        }
+        private CharacterWeaponSystem _weaponSystem;
+
+        public CharacterAim Aim
+        {
+            get
+            {
+                if (_aim == null)
+                    _aim = GetComponent<CharacterAim>();
+                return _aim;
+
+            }
+        }
+        private CharacterAim _aim;
+
+
         public event Action<bool> OnGroundChangedEvent;
         public event Action<CharacterInput> OnInputEvent;
         public event Action<bool> OnCrouch;
@@ -20,7 +76,7 @@ namespace MaximovInk.IDKWIW
         public CharacterInput CurrentInput => _currentInput;
         public Rigidbody Rigidbody => _rigidbody;
 
-        public CharacterComponents Components;
+        public Collider Collider;
 
         [SerializeField] private float _speed = 5f;
         [SerializeField] private float _sprintMultiplier = 2f;
@@ -33,6 +89,9 @@ namespace MaximovInk.IDKWIW
         [SerializeField] private float _crouchScaleMultiplier = 0.5f;
 
         [SerializeField] private LayerMask _groundLayerMask;
+        [SerializeField] private CapsuleCollider _collider;
+
+        [SerializeField] private CarController _currentVehicle;
 
         private Vector3 _velocity;
         private float _halfHeight;
@@ -45,40 +104,17 @@ namespace MaximovInk.IDKWIW
         private CharacterInput _currentInput;
         private Rigidbody _rigidbody;
 
-        private CapsuleCollider _collider;
-
         private RaycastHit _groundHitInfo;
 
         [SerializeField] private float _slopeLimit = 60f;
 
         [SerializeField] private float _currentSlopeAngle;
 
+        private RigidbodyConstraints _defaultConstraints;
+
         private void OnGroundChanged(bool newValue)
         {
             _rigidbody.drag = newValue ? _groundDrag : _airDrag;
-        }
-
-        private void FindComponents()
-        {
-            Components = new CharacterComponents
-            {
-                Controller = this,
-                Graphics = GetComponentInChildren<CharacterGraphics>(),
-                Animator = GetComponentInChildren<CharacterAnimator>(),
-                CameraController = GetComponentInChildren<CameraController>(),
-                WeaponSystem = GetComponentInChildren<CharacterWeaponSystem>(),
-                Aim = GetComponentInChildren<CharacterAim>(),
-            };
-        }
-
-        private void InitializeComponents()
-        {
-            var componentsToInitialize = GetComponentsInChildren<ICharacterComponent>();
-
-            foreach (var component in componentsToInitialize)
-            {
-                component.Initialize(Components);
-            }
         }
 
         public override void OnNetworkSpawn()
@@ -86,13 +122,9 @@ namespace MaximovInk.IDKWIW
             base.OnNetworkSpawn();
 
             _collider = GetComponent<CapsuleCollider>();
-
             _playerInitialScale = _collider.height;
             _rigidbody = GetComponent<Rigidbody>();
-
-            FindComponents();
-
-            InitializeComponents();
+            _defaultConstraints = _rigidbody.constraints;
 
             _crouchScale = _playerInitialScale * _crouchScaleMultiplier;
             OnGroundChangedEvent += OnGroundChanged;
@@ -105,7 +137,14 @@ namespace MaximovInk.IDKWIW
 
                 if (terrain != null)
                     terrain.Target = transform;
+
+                GameManager.Instance.SetCurrentCamera(Camera);
             }
+        }
+
+        public void FreezeRigidbody(bool isFreeze)
+        {
+            _rigidbody.constraints = isFreeze ? RigidbodyConstraints.FreezeAll : _defaultConstraints;
         }
 
         private void CheckGround()
@@ -124,6 +163,7 @@ namespace MaximovInk.IDKWIW
 
         private void Jump()
         {
+
             _isGround = false;
             OnGroundChanged(_isGround);
 
@@ -138,7 +178,7 @@ namespace MaximovInk.IDKWIW
 
         private void ApplyLook()
         {
-            if (_currentInput.LookAround && !Components.CameraController.IsFirstPerson) return;
+            if (_currentInput.LookAround && !CameraController.IsFirstPerson) return;
 
             _rigidbody.rotation *= Quaternion.Euler(0, _currentInput.LookValue.x, 0);
         }
@@ -217,6 +257,11 @@ namespace MaximovInk.IDKWIW
             if (inputValue.IsInvokeJump && IsGround)
                 Jump();
 
+            if (inputValue.QuitVehicle && _currentVehicle != null)
+            {
+                _currentVehicle.UnsedPlayer(this);
+            }
+
             _currentInput = inputValue;
 
             OnInputEvent?.Invoke(inputValue);
@@ -261,10 +306,36 @@ namespace MaximovInk.IDKWIW
 
         protected virtual void LateUpdate()
         {
-            if (!IsOwner || !Components.IsInitialized) return;
+            if (!IsOwner) return;
 
-            Components.Animator.UpdateAnimation();
+            Animator.UpdateAnimation();
         }
 
+        public virtual void InteractWith(IInteractable interactable)
+        {
+            interactable.Interact(this);
+        }
+
+        public void SetVehicle(CarController controller)
+        {
+            _currentVehicle = controller;
+            FreezeRigidbody(true);
+            Collider.enabled = false;
+            CameraController.gameObject.SetActive(false);
+
+            GetComponent<LocalPlayerInput>().CurrentInputTarget = controller;
+
+        }
+
+        public void UnsetVehicle()
+        {
+            GetComponent<LocalPlayerInput>().CurrentInputTarget = GetComponent<Player>();
+            FreezeRigidbody(false);
+            Collider.enabled = true;
+
+            CameraController.gameObject.SetActive(true);
+
+            _currentVehicle = null;
+        }
     }
 }

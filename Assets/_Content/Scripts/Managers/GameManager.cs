@@ -1,10 +1,13 @@
-﻿using Unity.Netcode;
+﻿using System;
+using Unity.Netcode;
 using UnityEngine;
 
 namespace MaximovInk.IDKWIW
 {
     public class GameManager : MonoBehaviourSingleton<GameManager>
     {
+        public event Action<Camera> OnCameraChanged;
+
         public NetworkManager NetworkManager
         {
             get
@@ -23,6 +26,18 @@ namespace MaximovInk.IDKWIW
 
         [SerializeField]
         private WeaponSystem _weaponSystem;
+
+        public Camera CurrentCamera => _currentCamera;
+
+        [SerializeField] private Camera _currentCamera;
+
+        public void SetCurrentCamera(Camera camera)
+        {
+            _currentCamera = camera;
+            OnCameraChanged?.Invoke(camera);
+        }
+
+
 
     }
 }

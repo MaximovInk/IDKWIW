@@ -3,6 +3,7 @@ using System.Linq;
 using Icaria.Engine.Procedural;
 using Unity.Mathematics;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -24,6 +25,26 @@ namespace MaximovInk.VoxelEngine
         public int FromHeight;
     }
 
+    [System.Serializable]
+    public struct ObjectSpawnData
+    {
+        public GameObject[] Prefabs;
+
+        public float Chance;
+
+        public bool RandomRot;
+
+        public bool RandomScale;
+
+        public float MinSize;
+        public float MaxSize;
+
+        public int LODMax;
+
+        public bool BlockRequire;
+        public string BlockRequireID;
+    }
+
     public class TerrainGeneration : MonoBehaviour
     {
         [SerializeField]
@@ -38,13 +59,158 @@ namespace MaximovInk.VoxelEngine
 
         private VoxelTerrain _terrain;
 
-        public bool FlatShading;
+        [SerializeField] private ObjectSpawnData[] _objects;
 
         private void Start()
         {
             _terrain = GetComponent<VoxelTerrain>();
 
-            _terrain.OnChunkLoaded += Generate;
+            _terrain.OnChunkLoaded += GenerateData;
+            _terrain.OnMeshGenerated += GenerateObjects;
+        }
+
+
+        private void GenerateObjects(VoxelChunk chunk)
+        {
+
+            var vertices = chunk.Mesh.vertices;
+            var normals = chunk.Mesh.normals;
+            var colors = chunk.Mesh.colors;
+
+            MKUtils.DestroyAllChildren(chunk.transform);
+
+            var chunkPos = chunk.transform.position;
+
+            var offsetRange = VoxelTerrain.BlockSize / 2f;
+
+            /*
+             vertices[i].GetHashCode()
+             */
+
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                var index = chunk.VertexToIndex[i];
+
+                Random.InitState(chunk.Position.GetHashCode() + index.GetHashCode());
+
+                var objectIndex = Random.Range(0, _objects.Length);
+
+                var objData = _objects[objectIndex];
+
+                if (chunk.LOD > objData.LODMax)
+                    continue;
+
+                var requireColor = VoxelDatabase.GetVoxel(objData.BlockRequireID).VertexColor;
+
+                if (objData.BlockRequire)
+                {
+                    var col = colors[i];
+
+                    var distance = Mathf.Abs(requireColor.r + requireColor.g + requireColor.b - col.r - col.g - col.b);
+
+                    if (distance > 0.1) continue;
+                }
+
+                var vertexPos = vertices[i];
+
+                //Random.InitState(chunk.Position.GetHashCode() + objData.GetHashCode() + vertices[i].GetHashCode());
+
+                var randomValue = Random.Range(0, 1f);
+
+                if (randomValue > objData.Chance) continue;
+
+                var prefab = objData.Prefabs[Random.Range(0, objData.Prefabs.Length)];
+
+                var objectPos = vertexPos + chunkPos +
+                                new Vector3(Random.Range(-offsetRange, offsetRange),
+                                    0,
+                                    Random.Range(-offsetRange, offsetRange)
+                                );
+
+                var instance = Instantiate(prefab, chunk.transform, true);
+
+                instance.transform.position = objectPos;
+
+                if (objData.RandomRot)
+                {
+                    instance.transform.localRotation = Quaternion.Euler(0, Random.Range(0, 360), 0);
+                }
+
+                if (objData.RandomScale)
+                {
+                    instance.transform.localScale =
+                        Random.Range(objData.MinSize, objData.MaxSize) * instance.transform.localScale;
+                }
+
+                instance.transform.up = normals[i];
+
+            }
+
+
+            /*
+             
+            for (int objectIndex = 0; objectIndex < _objects.Length; objectIndex++)
+            {
+                Random.InitState(chunk.Position.GetHashCode() + objectIndex.GetHashCode());
+
+                var objData = _objects[objectIndex];
+
+                if (chunk.LOD > objData.LODMax)
+                    continue;
+
+                var requireColor = VoxelDatabase.GetVoxel(objData.BlockRequireID).VertexColor;
+
+                for (int i = 0; i < vertices.Length; i++)
+                {
+
+                    if (objData.BlockRequire)
+                    {
+                        var col = colors[i];
+
+                        var distance = Mathf.Abs(requireColor.r + requireColor.g + requireColor.b - col.r - col.g - col.b);
+
+                        if (distance > 0.1) continue;
+                    }
+
+                    var vertexPos = vertices[i];
+
+                    var randomValue = Random.Range(0, 1f);
+
+                    if (randomValue > objData.Chance) continue;
+
+                    var objectPos = vertexPos + chunkPos +
+                                    new Vector3(Random.Range(-offsetRange, offsetRange),
+                                        0,
+                                        Random.Range(-offsetRange, offsetRange)
+                                    );
+
+                    var instance = Instantiate(objData.Prefab, chunk.transform, true);
+
+                    instance.transform.position = objectPos;
+
+                    if (objData.RandomRot)
+                    {
+                        instance.transform.localRotation = Quaternion.Euler(0, Random.Range(0, 360), 0);
+                    }
+
+                    if (objData.RandomScale)
+                    {
+                        instance.transform.localScale =
+                            Random.Range(objData.MinSize, objData.MaxSize) * instance.transform.localScale;
+                    }
+
+                    instance.transform.up = normals[i];
+                }
+
+            }
+
+             */
+
+
+
+
+
+
         }
 
         public float GetHeight(float x, float y)
@@ -89,13 +255,14 @@ namespace MaximovInk.VoxelEngine
 
         private static int3 ChunkSize => VoxelTerrain.ChunkSize;
 
-        private void Generate(VoxelChunk chunk)
+        private void GenerateData(VoxelChunk chunk)
         {
             var chunkPos = chunk.Position;
 
            
             var gridOrigin = ChunkSize * chunkPos;
 
+           
             for (int ix = 0; ix < ChunkSize.x; ix++)
             {
                 for (int iz = 0; iz < ChunkSize.z; iz++)
@@ -124,6 +291,10 @@ namespace MaximovInk.VoxelEngine
 
                         chunk.SetValue(pos, (byte)(value * 255f));
                     }
+
+
+                    
+
                 }
             }
 

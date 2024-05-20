@@ -50,6 +50,7 @@ namespace MaximovInk.VoxelEngine
     public class VoxelTerrain : MonoBehaviour
     {
         public event Action<VoxelChunk> OnChunkLoaded;
+        public event Action<VoxelChunk> OnMeshGenerated;
 
         public const int ChunkSize = 16;
         public const int HalfChunkSize = ChunkSize / 2;
@@ -314,7 +315,6 @@ namespace MaximovInk.VoxelEngine
 
         #region ChunkManipulation
 
-
         private void ClearLastCacheUsed()
         {
             _chunkLastUsed = null;
@@ -402,7 +402,6 @@ namespace MaximovInk.VoxelEngine
 
         }
 
-
         private void BuildChunkCache()
         {
             _chunksCache.Clear();
@@ -471,6 +470,10 @@ namespace MaximovInk.VoxelEngine
             chunk.Position = chunkPos;
             chunk.Initialize();
             _chunksCache[chunkPos] = chunk;
+
+            //TODO: Unsubscribe
+            chunk.OnMeshGenerated += () => { OnMeshGenerated?.Invoke(chunk); };
+
             return chunk;
         }
 
@@ -607,6 +610,23 @@ namespace MaximovInk.VoxelEngine
             var localPos = transform.InverseTransformPoint(worldPos);
             
             return LocalToChunk(localPos);
+        }
+
+        private Vector3 GridToLocal(int3 position)
+        {
+            return new Vector3(
+                (position.x) * BlockSize,
+                (position.y) * BlockSize,
+                (position.z) * BlockSize);
+        }
+
+        public Vector3 GridToWorld(int3 gridPos)
+        {
+            var localPos = GridToLocal(gridPos);
+
+            var worldPos = transform.TransformPoint(localPos);
+
+            return worldPos;
         }
 
         #endregion

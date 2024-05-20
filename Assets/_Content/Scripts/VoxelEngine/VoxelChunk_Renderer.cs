@@ -8,6 +8,8 @@ namespace MaximovInk.VoxelEngine
         private MeshRenderer _meshRenderer;
         private MeshCollider _meshCollider;
 
+        public Mesh Mesh => _mesh;
+
         private Mesh _mesh;
 
         private MeshDataStruct _meshData;

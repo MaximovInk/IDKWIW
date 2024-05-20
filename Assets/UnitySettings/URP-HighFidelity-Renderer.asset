@@ -16,15 +16,15 @@ MonoBehaviour:
   m_Settings:
     AOMethod: 1
     Downsample: 0
-    AfterOpaque: 0
+    AfterOpaque: 1
     Source: 1
-    NormalSamples: 1
-    Intensity: 1.5
-    DirectLightingStrength: 0.329
-    Radius: 0.7
+    NormalSamples: 2
+    Intensity: 1
+    DirectLightingStrength: 0.161
+    Radius: 0.5
     Samples: 1
-    BlurQuality: 1
-    Falloff: 21.78
+    BlurQuality: 0
+    Falloff: 8.37
     SampleCount: -1
   m_BlueNoise256Textures:
   - {fileID: 2800000, guid: 36f118343fc974119bee3d09e2111500, type: 3}
@@ -111,7 +111,7 @@ MonoBehaviour:
     zFailOperation: 0
   m_ShadowTransparentReceive: 1
   m_RenderingMode: 0
-  m_DepthPrimingMode: 2
+  m_DepthPrimingMode: 0
   m_CopyDepthMode: 0
   m_AccurateGbufferNormals: 0
   m_IntermediateTextureMode: 1
@@ -127,16 +127,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 836fba37e8552f541abf20055e192196, type: 3}
   m_Name: AtmosphericFogRenderFeature
   m_EditorClassIdentifier: 
-  m_Active: 1
+  m_Active: 0
   settings:
-    color: {r: 0.21960786, g: 0.6666667, b: 0.8117648, a: 0.89411765}
-    sunColor: {r: 0.990566, g: 0.8900347, b: 0.61209506, a: 1}
-    fogDensity: 0.01
-    fogDensityPower: 6.1
-    skyAlpha: 0.5
+    color: {r: 0.16509432, g: 0.864775, b: 1, a: 1}
+    sunColor: {r: 0.38714847, g: 0.9433962, b: 0.8381645, a: 1}
+    fogDensity: 0.0085
+    fogDensityPower: 11.8
+    skyAlpha: 0.109
     useHeightFog: 0
     fogHeightStart: 0
-    fogHeightEnd: 30
+    fogHeightEnd: 30.47
     fogHeightPower: 0.5
     extraFogHeightEnd: 0
     extraFogHeightPower: 2

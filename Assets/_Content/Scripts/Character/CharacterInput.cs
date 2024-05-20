@@ -19,5 +19,12 @@ namespace MaximovInk.IDKWIW
 
         public bool IsAiming;
         public bool IsFire;
+
+        public bool VehicleBrake;
+
+        public bool IsInvokeInteract;
+
+        public bool QuitVehicle;
+
     }
 }
