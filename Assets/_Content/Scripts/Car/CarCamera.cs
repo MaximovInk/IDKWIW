@@ -1,22 +1,15 @@
-
-using UnityEngine;
-
 namespace MaximovInk.IDKWIW
 {
     public class CarCamera : BaseCameraController
     {
-        public override void OnNetworkSpawn()
+        private void Awake()
         {
-            base.OnNetworkSpawn();
-
             GetComponentInParent<CarController>().OnInput += CarCamera_OnInput;
-            Debug.Log(GetComponentInParent<CarController>() == null);
+
         }
 
         private void CarCamera_OnInput(CharacterInput currentInput)
         {
-          
-
             HandleInput(new CameraLookInput()
             {
                 InvokeChangeCamera = currentInput.InvokeChangeCamera,

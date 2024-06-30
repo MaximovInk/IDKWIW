@@ -67,6 +67,9 @@ public class BaseCameraController : NetworkBehaviour
     public override void OnNetworkSpawn()
     {
         base.OnNetworkSpawn();
+
+        Debug.Log($"SPAWN {gameObject.name}");
+
         _initPosition = _cameraObject.transform.localPosition;
         _isFirstPerson = true;
     }
@@ -170,6 +173,8 @@ public class BaseCameraController : NetworkBehaviour
     
     private void LateUpdate()
     {
+        Debug.Log($"{!IsSpawned} {_target == null} {gameObject.name}" );
+
         if (!IsSpawned) return;
 
         if (_target == null) return;

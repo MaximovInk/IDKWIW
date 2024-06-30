@@ -219,8 +219,6 @@ namespace MaximovInk.IDKWIW
 
                 }
 
-               
-
                 _velocity *= _speed;
 
                 if (CurrentInput.IsSprint)

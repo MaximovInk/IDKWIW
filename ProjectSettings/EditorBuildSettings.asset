@@ -8,6 +8,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Content/Scenes/MainScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 1
+    path: Assets/MaximovInk/MKCharacterController/Scenes/CharacterControllerTestScene.unity
+    guid: 2a590c4ff752c324ca41938b36cbe740
   m_configObjects:
     com.unity.input.settings: {fileID: 11400000, guid: 54a6a98d42cfcef4784c788899843093,
       type: 2}

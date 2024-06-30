@@ -1,12 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using MaximovInk.IDKWIW;
 using Unity.Netcode;
 using UnityEngine;
-using static Unity.VisualScripting.Member;
-using CharacterController = MaximovInk.IDKWIW.CharacterController;
-
+using CharacterController 
+    = MaximovInk.IDKWIW.CharacterController;
 
 namespace MaximovInk
 {
@@ -22,6 +20,20 @@ namespace MaximovInk
         public Transform Graphics;
         public WheelCollider Collider;
         public WheelAxle Axle;
+
+        public bool inverseRotDirection;
+
+        [HideInInspector]
+        public Transform _child;
+        [HideInInspector]
+        public Quaternion _initRotation;
+    }
+
+    public enum WheelAxis
+    {
+        X,
+        Y,
+        Z,
     }
 
     public class CarController : NetworkBehaviour, IPlayer
@@ -53,6 +65,15 @@ namespace MaximovInk
         private Vector2 _moveInput;
         private bool _invokeBrake;
 
+        [SerializeField] private WheelAxis _wheelAxis;
+
+        private void Awake()
+        {
+            _carCamera = GetComponentInChildren<CarCamera>();
+            if(_carCamera != null)
+                _carCamera.gameObject.SetActive(false);
+        }
+
         public override void OnNetworkSpawn()
         {
             base.OnNetworkSpawn();
@@ -60,8 +81,15 @@ namespace MaximovInk
             _rigidbody = GetComponent<Rigidbody>();
             _rigidbody.centerOfMass = _centerOfMass;
             
-            _carCamera = GetComponentInChildren<CarCamera>();
-            _carCamera.gameObject.SetActive(false);
+            for (var index = 0; index < _wheels.Length; index++)
+            {
+                var wheel = _wheels[index];
+
+                wheel._child = wheel.Graphics.GetChild(0);
+                wheel._initRotation = wheel._child.localRotation;
+               
+                _wheels[index] = wheel;
+            }
         }
 
         private void Move()
@@ -135,6 +163,8 @@ namespace MaximovInk
                 wheel.Collider.steerAngle = Mathf.Lerp(wheel.Collider.steerAngle, steerAngle, 0.6f);
             }
 
+            if (_sterringWheel == null) return;
+
             var rot = _sterringWheel.localRotation;
 
             var angles = rot.eulerAngles;
@@ -144,14 +174,45 @@ namespace MaximovInk
             _sterringWheel.localRotation = Quaternion.Lerp(rot, newRot, 0.6f);
         }
 
+        private void RotateWheel(Transform target, Vector3 lastEuler, float rot, bool inverseDirection)
+        {
+            if (inverseDirection)
+                rot *= -1;
+
+            switch (_wheelAxis)
+            {
+                case WheelAxis.X:
+                    target.localRotation = Quaternion.Euler(lastEuler.x + rot, lastEuler.y, lastEuler.z);
+                    break;
+                case WheelAxis.Y:
+                    target.localRotation = Quaternion.Euler(lastEuler.x, lastEuler.y + rot, lastEuler.z);
+                    break;
+                case WheelAxis.Z:
+                    target.localRotation = Quaternion.Euler(lastEuler.x, lastEuler.y, lastEuler.z + rot);
+                    break;
+            }
+
+           
+        }
+
         private void AnimateWheels()
         {
             foreach (var wheel in _wheels)
             {
+                if(wheel._child == null) continue;
+
                 wheel.Collider.GetWorldPose(out var position,out var rotation);
 
-                wheel.Graphics.transform.SetPositionAndRotation(position,rotation);
+               // wheel._child.Rotate(wheel.Collider.rpm * 6.6f * Time.deltaTime, 0, 0, Space.Self);
 
+               var chPrev = wheel._child.localRotation.eulerAngles;
+
+                RotateWheel(wheel._child, chPrev, wheel.Collider.rotationSpeed * Time.deltaTime,wheel.inverseRotDirection);
+
+                var prev = wheel.Graphics.localRotation.eulerAngles;
+
+                wheel.Graphics.localRotation = Quaternion.Euler(prev.x, wheel.Collider.steerAngle, prev.z);
+                wheel.Graphics.transform.position = position;
             }
         }
 
