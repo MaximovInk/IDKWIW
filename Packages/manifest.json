@@ -2,6 +2,7 @@
   "dependencies": {
     "com.community.netcode.extensions": "https://github.com/Unity-Technologies/multiplayer-community-contributions.git?path=/com.community.netcode.extensions",
     "com.cqf.urpvolumetricfog": "https://github.com/CristianQiu/Unity-URP-Volumetric-Light.git",
+    "com.unity.2d.sprite": "1.0.0",
     "com.unity.collab-proxy": "2.3.1",
     "com.unity.feature.characters-animation": "1.0.0",
     "com.unity.ide.rider": "3.0.25",

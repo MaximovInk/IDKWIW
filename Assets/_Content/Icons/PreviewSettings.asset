@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7922ddef896c9e4bb75c1dec89abcc8, type: 3}
+  m_Name: PreviewSettings
+  m_EditorClassIdentifier: 
+  iconSavePath: _Content/Icons/
+  settingsSavePath: _Content/Icons/
+  objectPosition: {x: -0.203125, y: -0.0625, z: 0}
+  objectRotation: {x: 347.69205, y: 101.2939, z: 346.09775}
+  previewFOV: 12.999977
+  lightOneColor: {r: 1, g: 1, b: 1, a: 1}
+  lightOneIntensity: 2
+  lightTwoColor: {r: 0, g: 0.6862745, b: 1, a: 1}
+  lightTwoIntensity: 2
+  isTransparent: 1
+  backgroundColor: {r: 0.192, g: 0.192, b: 0.192, a: 1}
+  backgroundTexture: {fileID: 0}
+  foregroundTexture: {fileID: 0}
+  iconResolution: 256

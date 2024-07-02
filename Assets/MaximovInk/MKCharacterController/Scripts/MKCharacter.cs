@@ -1,9 +1,7 @@
 using System;
 using Unity.Netcode;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
-using UnityEngine.Serialization;
 
 namespace MaximovInk
 {
@@ -30,6 +28,7 @@ namespace MaximovInk
         public Animator Animator => _animator;
         public Rigidbody Rigidbody => _rigidbody;
         public CapsuleCollider Collider => _collider;
+        public Camera Camera => _camera;
 
         public float GetMouseSensX() => _mouseSens * _mouseSensAxis.x;
         public float GetMouseSensY() => _mouseSens * _mouseSensAxis.y;
@@ -83,9 +82,9 @@ namespace MaximovInk
         private bool _isAiming;
         private bool _invokeFire;
         private bool _lockInput;
+        private bool _isInteract;
 
         private int _jumpHash;
-        private int _fallingHash;
         private int _groundedHash;
         private int _xVelHash;
         private int _yVelHash;
@@ -107,19 +106,18 @@ namespace MaximovInk
 
         [SerializeField]
         private Transform _weaponParent;
-        private Gun _currentWeapon;
+        private Weapon _currentWeapon;
 
         [SerializeField] private LayerMask _aimMask;
         [SerializeField] private Transform _worldPoint;
         [SerializeField] private float _maxRayDistance = 50f;
-        [SerializeField] private bool _alwaysAim;
-       // [SerializeField] private AimPointInfo _currentAimPoint;
 
         public NetworkVariable<Vector3> CurrentAimHitPoint = new(writePerm: NetworkVariableWritePermission.Owner);
         public NetworkVariable<Vector3> CurrentAimHitNormal = new(writePerm: NetworkVariableWritePermission.Owner);
         public NetworkVariable<bool> CurrentAimIsHit = new(writePerm: NetworkVariableWritePermission.Owner);
+        public RaycastHit CurrentAimHitResult;
 
-        public NetworkVariable<int> WeaponIndex = new(writePerm: NetworkVariableWritePermission.Owner, readPerm: NetworkVariableReadPermission.Everyone);
+        public NetworkVariable<int> WeaponIndex = new(-1, writePerm: NetworkVariableWritePermission.Owner, readPerm: NetworkVariableReadPermission.Everyone);
 
         [SerializeField] private float _aimRigWeight = 0f;
         private Vector3 _aimTargetPosition;
@@ -127,13 +125,14 @@ namespace MaximovInk
         [SerializeField] private Transform _secondHandIK;
 
         [SerializeField] private Rig _aimRig;
+        [SerializeField] private Rig _headRig;
         [SerializeField] private Transform _headIk;
 
+        
+        [SerializeField] private Transform _kickbackTransform;
+        [SerializeField] private Vector3 _kickBackInitPos;
 
-        [SerializeField]
-        private Gun _testGun;
-
-        private RaycastHit[] results = new RaycastHit[20];
+        private readonly RaycastHit[] _results = new RaycastHit[20];
 
         private void Awake()
         {
@@ -146,7 +145,6 @@ namespace MaximovInk
             _xVelHash = Animator.StringToHash("X_Velocity");
             _yVelHash = Animator.StringToHash("Y_Velocity");
             _jumpHash = Animator.StringToHash("Jump");
-            _fallingHash = Animator.StringToHash("Falling");
             _groundedHash = Animator.StringToHash("Grounded");
             _isCrouchHash = Animator.StringToHash("IsCrouch");
             _isAimingHash = Animator.StringToHash("IsAiming");
@@ -175,10 +173,17 @@ namespace MaximovInk
 
             if (!IsOwner) return;
 
+            WeaponIndex.Value = -1;
+
             Cursor.lockState = CursorLockMode.Locked;
 
             _secondHandConstraint.weight = 0f;
             _aimRigWeight = 0f;
+            _kickBackInitPos = _kickbackTransform.localPosition;
+
+            _camera.transform.SetParent(null);
+
+            MKCharacterManager.Instance.Current = this;
         }
 
         public override void OnNetworkDespawn()
@@ -208,24 +213,31 @@ namespace MaximovInk
 
         private void HandleInput()
         {
-            if (Input.GetKeyDown(KeyCode.G))
+            bool invokeLockWithoutReset = Input.GetKeyDown(KeyCode.H);
+
+            if (Input.GetKeyDown(KeyCode.J) || invokeLockWithoutReset)
+            {
                 _lockInput = !_lockInput;
 
-            if (_lockInput)
-            {
+                if (!invokeLockWithoutReset)
+                {
+                    _isCrouch = default;
+                    _isSprint = default;
+                    _invokeJump = default;
+                    _changeCameraInvoke = default;
+                    _scrollDelta = default;
+                    _lookAround = default;
+                    _invokeFire = default;
+                    _isAiming = default;
+                }
+
                 _moveInput = default;
                 _lookInput = default;
-                _isCrouch = default;
-                _isSprint = default;
-                _invokeJump = default;
-                _changeCameraInvoke = default;
-                _scrollDelta = default;
-                _lookAround = default;
-                _invokeFire = default;
-                _isAiming = default;
-
-                return;
             }
+
+            if (_lockInput)
+                return;
+            
 
             _moveInput = new Vector2(
                 Input.GetAxis("Horizontal"), 
@@ -242,40 +254,27 @@ namespace MaximovInk
             _invokeFire = Input.GetMouseButton(0);
 
             _isAiming = Input.GetMouseButton(1);
+            _isInteract = Input.GetKeyDown(KeyCode.E);
 
             if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                WeaponIndex.Value = 1;
+                //WeaponIndex.Value = 1;
 
                 //SetCurrentWeaponServerRpc(1);
                 // SetCurrentWeapon(_testGun);
             }
             if (Input.GetKeyDown(KeyCode.Alpha2))
             {
-                WeaponIndex.Value = 0;
+               // WeaponIndex.Value = 0;
 
                 //SetCurrentWeaponServerRpc(2);
                 //SetCurrentWeapon(null);
             }
         }
 
-        [ServerRpc]
-        private void SetCurrentWeaponServerRpc(int index)
-        {
-           
-            SetCurrentWeaponClientRpc(index);
-        }
-
-        [ClientRpc]
-        private void SetCurrentWeaponClientRpc(int index)
-        {
-            
-
-        }
-
         private void SetCurrentWeapon(int index)
         {
-            var gun = index == 1 ? _testGun : null;
+            var gun = WeaponManager.Instance.Database.Get(index);
 
             if (_currentWeapon != null)
                 Destroy(_currentWeapon.gameObject);
@@ -291,12 +290,10 @@ namespace MaximovInk
             if (_currentWeapon != null)
             {
                 _secondHandConstraint.weight = _currentWeapon.SecondArmTarget != null ? 1f : 0f;
-
             }
 
             _aimRigWeight = gun != null ? 1f : 0f;
         }
-
 
         private Vector3 GetSlopeMoveDir(Vector3 moveDirection)
         {
@@ -402,20 +399,14 @@ namespace MaximovInk
 
         private void CalculateAimPoint()
         {
-            /*
-             if (!IsOwner)
-            {
-                _aimTargetPosition = _worldPoint.position;
-            }
-            else 
-             */
+            
 
             if (!_lookAround)
             {
                 var screenCenter = new Vector2(Screen.width / 2f, Screen.height / 2f);
                 var ray = _camera.ScreenPointToRay(screenCenter);
 
-                 var hits = Physics.RaycastNonAlloc(ray, results, 999f, _aimMask, QueryTriggerInteraction.Ignore);
+                 var hits = Physics.RaycastNonAlloc(ray, _results, 999f, _aimMask, QueryTriggerInteraction.Ignore);
                  var foundPoint = false;
                  var closestIndex = 0;
                 float closestDist = Mathf.Infinity;
@@ -424,23 +415,23 @@ namespace MaximovInk
 
                 for (int i = 0; i < hits; i++)
                 {
-                    if (results[i].collider.transform.root == transform)
+                    if (_results[i].collider.transform.root == transform)
                     {
                         continue;
                     }
 
                     if (foundPoint)
                     {
-                        if (results[i].distance < closestDist)
+                        if (_results[i].distance < closestDist)
                         {
                             closestIndex = i;
-                            closestDist = results[i].distance;
+                            closestDist = _results[i].distance;
                         }
 
                     }
                     else
                     {
-                        closestDist = results[i].distance;
+                        closestDist = _results[i].distance;
 
                     }
                     foundPoint = true;
@@ -458,7 +449,7 @@ namespace MaximovInk
                 }
                 else
                 {
-                    _aimTargetPosition = results[closestIndex].point;
+                    _aimTargetPosition = _results[closestIndex].point;
 
                     /*
                      _currentAimPoint = new AimPointInfo()
@@ -471,10 +462,10 @@ namespace MaximovInk
 
                     if (IsOwner)
                     {
-                        CurrentAimHitPoint.Value = results[closestIndex].point;
-                        CurrentAimHitNormal.Value = results[closestIndex].normal;
+                        CurrentAimHitResult = _results[closestIndex];
+                        CurrentAimHitPoint.Value = CurrentAimHitResult.point;
+                        CurrentAimHitNormal.Value = CurrentAimHitResult.normal;
                         CurrentAimIsHit.Value = true;
-
                     }
                   
                     
@@ -484,15 +475,95 @@ namespace MaximovInk
             }
         }
 
-        private void UpdateAnimation()
+
+        [ServerRpc]
+        private void FireServerRpc()
         {
-            CalculateAimPoint();
-            AimLogic();
+            FireClientRpc();
+        }
+
+        [ClientRpc]
+        private void FireClientRpc()
+        {
+
+            if(_currentWeapon != null)
+                _currentWeapon.Fire();
+        }
+
+        public void KickBack()
+        {
+            if (!_currentWeapon.KickbackWeaponData.KickbackEnabled) return;
+
+            var rot = _kickbackTransform.localRotation;
+            var pos = _kickbackTransform.localPosition;
+            var maxRot = _currentWeapon.KickbackWeaponData.MaxKickBackRotation;
+            var maxPos = _currentWeapon.KickbackWeaponData.MaxKickBackPosition;
+            
+            var speed = _currentWeapon.KickbackWeaponData.KickBackSpeed;
+
+            rot = Quaternion.Lerp(rot, Quaternion.Euler(maxRot, rot.y, rot.z), Time.deltaTime * speed);
+            pos = Vector3.Lerp(pos,  _kickBackInitPos +new Vector3(0, maxPos,0 ), Time.deltaTime * speed);
+
+            _kickbackTransform.SetLocalPositionAndRotation(pos, rot);
+        }
+
+        private void AimLogic()
+        {
+            _aimRig.weight = Mathf.Lerp(_aimRig.weight, _aimRigWeight, Time.deltaTime * 15f);
+            _animator.SetLayerWeight(1, _aimRig.weight);
+
+            if (_currentWeapon != null && _currentWeapon.SecondArmTarget != null)
+            {
+                var armTarget = _currentWeapon.SecondArmTarget;
+
+                _secondHandIK.SetPositionAndRotation(armTarget.position, armTarget.rotation);
+            }
+
+            if (_currentWeapon != null && !_isAiming)
+            {
+                _headIk.transform.position = _currentWeapon.AimPoint.transform.position;
+
+                _headRig.weight = Mathf.Lerp(_headRig.weight, 1f, Time.deltaTime * 5f);
+            }
+            else
+            {
+                _headIk.transform.position = _aimTargetPosition;
+
+                _headRig.weight = Mathf.Lerp(_headRig.weight, 0.3f, Time.deltaTime * 5f);
+            }
+
+            if (!IsOwner) return;
+
+            _animator.SetBool(_isAimingHash, _isAiming);
+        }
+
+        private void ChangeCamera()
+        {
+            _isFirstPerson = !_isFirstPerson;
+
+            //_camera.transform.SetParent(_isFirstPerson ? transform : null);
+        }
+
+        private void ResetKickBack()
+        {
+            var rot = _kickbackTransform.localRotation;
+            var pos = _kickbackTransform.localPosition;
+
+            var speed = 5f;
+
+            if(_currentWeapon != null)
+                speed = _currentWeapon.KickbackWeaponData.KickBackReturnSpeed;
+
+            rot = Quaternion.Lerp(rot, Quaternion.identity, Time.deltaTime * speed);
+            pos = Vector3.Lerp(pos, _kickBackInitPos, Time.deltaTime * speed);
+
+            _kickbackTransform.SetLocalPositionAndRotation(pos, rot);
         }
 
         private void Update()
         {
-            UpdateAnimation();
+            CalculateAimPoint();
+            AimLogic();
 
             if (!IsOwner) return;
 
@@ -509,46 +580,16 @@ namespace MaximovInk
             {
                 FireServerRpc();
             }
-        }
 
-        [ServerRpc]
-        private void FireServerRpc()
-        {
-            FireClientRpc();
-        }
-
-        [ClientRpc]
-        private void FireClientRpc()
-        {
-
-            if(_currentWeapon != null)
-                _currentWeapon.Fire();
-        }
-
-        private void AimLogic()
-        {
-            _aimRig.weight = Mathf.Lerp(_aimRig.weight, _aimRigWeight, Time.deltaTime * 15f);
-            _animator.SetLayerWeight(1, _aimRig.weight);
-
-            if (_currentWeapon != null && _currentWeapon.SecondArmTarget != null)
+            if (_isInteract && CurrentAimIsHit.Value)
             {
-                var target = _currentWeapon.SecondArmTarget;
+                var interactObject = CurrentAimHitResult.transform.root.GetComponent<IInteractable>();
 
-                _secondHandIK.SetPositionAndRotation(target.position, target.rotation);
+                if (interactObject != null)
+                {
+                    interactObject.Interact(this);
+                }
             }
-
-            _headIk.transform.position = _aimTargetPosition;
-
-            if (!IsOwner) return;
-
-            _animator.SetBool(_isAimingHash, _isAiming);
-        }
-
-        private void ChangeCamera()
-        {
-            _isFirstPerson = !_isFirstPerson;
-
-            _camera.transform.SetParent(_isFirstPerson ? transform : null);
         }
 
         private void FixedUpdate()
@@ -562,7 +603,7 @@ namespace MaximovInk
             if (!_lookAround && Mathf.Abs(_yawOffset) <= 0.07f)
             {
                 var lastRot = transform.eulerAngles;
-                lastRot.y = Mathf.LerpAngle(lastRot.y, _camera.transform.eulerAngles.y, Time.deltaTime * 20f);
+                lastRot.y = Mathf.LerpAngle(lastRot.y, _camera.transform.eulerAngles.y, Time.fixedDeltaTime * 20f);
                 transform.eulerAngles = lastRot;
             }
 
@@ -626,7 +667,9 @@ namespace MaximovInk
                 _currentWeapon.transform.SetPositionAndRotation(_weaponParent.position, _weaponParent.rotation);
             }
 
-           
+            ResetKickBack();
+
+            
         }
 
         protected virtual void OnDrawGizmosSelected()

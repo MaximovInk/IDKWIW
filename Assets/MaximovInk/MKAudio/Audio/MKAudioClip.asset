@@ -39,7 +39,7 @@ MonoBehaviour:
       m_PreInfinity: 2
       m_PostInfinity: 2
       m_RotationOrder: 4
-    SpatialBlend: 0.1
+    SpatialBlend: 0
     MasterVolume: 1
     Range: 40
   - Source: {fileID: 8300000, guid: 563378a6c0d901745b6387e190a9a6e4, type: 3}
