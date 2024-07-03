@@ -51,6 +51,8 @@ namespace MaximovInk.VoxelEngine
 
         private void OnMarchingCubesDestroy()
         {
+            _handle.Complete();
+            
             smoothedVerticesCache.Dispose();
             cubeValues.Dispose();
 
@@ -120,7 +122,9 @@ namespace MaximovInk.VoxelEngine
             _currentJob.valuesForwardRightTop = _neighbors.ForwardTopRight != null && !_neighbors.ForwardTopRight.IsEmpty() ? new NativeArray<byte>(_neighbors.ForwardTopRight._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
             _currentJob.valuesForwardTop = _neighbors.ForwardTop != null && !_neighbors.ForwardTop.IsEmpty() ? new NativeArray<byte>(_neighbors.ForwardTop._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
 
-            StartCoroutine(WaitFor(_currentJob.Schedule()));
+            _handle = _currentJob.Schedule();
+
+            StartCoroutine(WaitFor(_handle));
         }
 
 
