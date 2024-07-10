@@ -52,17 +52,12 @@ namespace MaximovInk.VoxelEngine
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void DrawChunkBounds(VoxelChunk chunk)
         {
-            var globalPos = chunk.Terrain.transform.position;
-
             var chunkSize = VoxelTerrain.DoubleChunkSize;
 
             var halfSize = chunkSize / 2;
 
-            var chunkPos = chunk.Position;
-
-
-            DrawBox(globalPos + new Vector3(
-                    chunkPos.x * chunkSize + halfSize, chunkPos.y * chunkSize + halfSize, chunkPos.z * chunkSize + halfSize),
+            DrawBox(chunk.transform.position + new Vector3(
+                     halfSize, halfSize, halfSize),
                 Quaternion.identity, new Vector3(chunkSize, chunkSize, chunkSize), Color.blue);
 
         }

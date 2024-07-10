@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace MaximovInk
 {
@@ -13,6 +14,11 @@ namespace MaximovInk
 
         [SerializeField, Range(0f,1f)]
         private float _distance = 1f;
+
+        private void Update()
+        {
+            
+        }
 
         private void Awake()
         {
@@ -38,6 +44,8 @@ namespace MaximovInk
 
         private void OnAnimatorIK(int layerIndex)
         {
+            if (!enabled) return;
+
             FootLogic(AvatarIKGoal.LeftFoot);
             FootLogic(AvatarIKGoal.RightFoot);
 

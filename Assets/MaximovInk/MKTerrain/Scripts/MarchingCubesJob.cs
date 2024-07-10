@@ -12,6 +12,7 @@ namespace MaximovInk.VoxelEngine
     {
         public NativeArray<ushort> _data;
         public NativeArray<byte> _values;
+        public NativeArray<Color> _colors;
 
         public NativeArray<byte> valuesForward;
         public NativeArray<byte> valuesRight;
@@ -151,12 +152,9 @@ namespace MaximovInk.VoxelEngine
             return cubeIndex;
         }
 
-        private float4 GetColor(ushort blockId)
+        private Color GetColor(int blockId)
         {
-            if(blockId == 0) return float4.zero;
-
-            return _blockColors[blockId - 1];
-
+            return _colors[blockId];
         }
 
         private float3 InterpolateEdges(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, float valueAtVertex2)
@@ -210,7 +208,9 @@ namespace MaximovInk.VoxelEngine
                         }
 
                         var blockId = _data[index];
-                        var color = GetColor(blockId);
+                        var clr = GetColor(index);
+
+                        var color = new float4(clr.r, clr.g, clr.b, clr.a);
 
                         var edges = triTable[cubeIndex];
 

@@ -1,4 +1,5 @@
 using System;
+using MaximovInk.VoxelEngine;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Animations.Rigging;
@@ -184,6 +185,10 @@ namespace MaximovInk
             _camera.transform.SetParent(null);
 
             MKCharacterManager.Instance.Current = this;
+
+            var terrain = FindObjectOfType<VoxelTerrain>();
+            if (terrain != null)
+                terrain.Target = transform;
         }
 
         public override void OnNetworkDespawn()

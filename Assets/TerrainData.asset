@@ -1,0 +1,56 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da688cff8a8c83d46b371937dd843779, type: 3}
+  m_Name: TerrainData
+  m_EditorClassIdentifier: 
+  IsoLevel: 25
+  FlatShading: 0
+  _material: {fileID: 2100000, guid: f933e32f6eec38949840decad10acd78, type: 2}
+  GrassModulePrefab: {fileID: 2172048368702263320, guid: 230cab44f438b5c41a72ad245163866e,
+    type: 3}
+  AllocateChunkCount: 256
+  _lodSettings:
+    LODs:
+    - LOD: 16
+      DistanceInChunks: 10
+      DistanceDoubled: 0
+    - LOD: 8
+      DistanceInChunks: 8
+      DistanceDoubled: 0
+    - LOD: 4
+      DistanceInChunks: 6
+      DistanceDoubled: 0
+    - LOD: 2
+      DistanceInChunks: 3
+      DistanceDoubled: 0
+    - LOD: 1
+      DistanceInChunks: 0
+      DistanceDoubled: 0
+    Delay: 0.01
+    _timer: 0
+    LODFreeChunk: 8
+  _loaderSettings:
+    ChunkAroundUpdate:
+      x: 8
+      y: 1
+      z: 8
+    Delay: 0.02
+    _timer: 0
+    _loaderMax:
+      x: 4
+      y: 1
+      z: 4
+    _loaderMin:
+      x: 4
+      y: -1
+      z: 4
+  _objectsDatabase: {fileID: 0}

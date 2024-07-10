@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Linq;
 using Unity.Collections;
+using UnityEngine;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -8,11 +9,13 @@ namespace MaximovInk.VoxelEngine
     {
         public NativeArray<ushort> Blocks;
         public NativeArray<byte> Value;
+        public NativeArray<Color> Colors;
 
         public ChunkData(int width, int height, int depth)
         {
             Blocks = new NativeArray<ushort>(width*height*depth, Allocator.Persistent);
             Value = new NativeArray<byte>(width*height*depth, Allocator.Persistent);
+            Colors = new NativeArray<Color>(width*height*depth, Allocator.Persistent);
 
             Clear();
         }
@@ -26,6 +29,11 @@ namespace MaximovInk.VoxelEngine
             }
         }
 
+        public bool IsFull()
+        {
+            return Blocks.All(t => t > 0);
+        }
+
         public bool IsEmpty()
         {
             return Blocks.All(t => t <= 0);
@@ -37,6 +45,7 @@ namespace MaximovInk.VoxelEngine
         {
             Blocks.Dispose();
             Value.Dispose();
+            Colors.Dispose();
         }
 
     }

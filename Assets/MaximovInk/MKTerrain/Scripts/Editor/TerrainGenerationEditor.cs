@@ -1,6 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
-using MaximovInk.VoxelEngine;
+using MaximovInk.VoxelEngine.Old;
 using UnityEditor;
 using UnityEngine;
 

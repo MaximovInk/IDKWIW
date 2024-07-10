@@ -100,6 +100,7 @@ namespace MaximovInk.VoxelEngine
                 cubeValues = cubeValues,
                 _data = new NativeArray<ushort>(_data.Blocks, Allocator.TempJob),
                 _values = new NativeArray<byte>(_data.Value, Allocator.TempJob),
+                _colors = new NativeArray<Color>(_data.Colors, Allocator.TempJob),
                 lod = _lod,
                 smoothing = !Terrain.FlatShading,
                 _isoLevelByte = Terrain.IsoLevel,
@@ -146,6 +147,7 @@ namespace MaximovInk.VoxelEngine
             _currentJob.valuesForwardRightTop.Dispose();
             _currentJob.valuesForwardTop.Dispose();
 
+            _currentJob._colors.Dispose();
             _currentJob._data.Dispose();
             _currentJob._values.Dispose();
 

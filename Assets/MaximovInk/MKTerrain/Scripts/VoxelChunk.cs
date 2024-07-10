@@ -2,6 +2,7 @@
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
+using UnityEngine.UIElements;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -9,11 +10,30 @@ namespace MaximovInk.VoxelEngine
     public partial class VoxelChunk : MonoBehaviour
     {
         public event Action OnMeshGenerated;
+        public event Action OnPositionChanged;
+
+        private event Action OnInitializeModules;
+        private event Action OnUpdateModules;
+        private event Action OnDestroyModules;
 
         public const int ChunkSize = VoxelTerrain.ChunkSize;
         public static float3 BlockSize => VoxelTerrain.BlockSize;
 
-        public int3 Position;
+        public int3 Position
+        {
+            get => _position;
+
+            set
+            {
+                var temp = _position;
+                _position = value;
+                if (!temp.Equals(_position))
+                    OnPositionChanged?.Invoke();
+
+            }
+        }
+
+        private int3 _position;
         public VoxelTerrain Terrain;
 
         private ChunkData _data;
@@ -54,6 +74,8 @@ namespace MaximovInk.VoxelEngine
 
             VoxelUtility.DrawChunkBounds(this);
 
+            OnUpdateModules?.Invoke();
+
             if (_isDirty)
             {
                 CacheNeighbors();
@@ -69,6 +91,8 @@ namespace MaximovInk.VoxelEngine
 
         private void OnDestroy()
         {
+            OnDestroyModules?.Invoke();
+
             _isDestroyed = true;
             _data.Dispose();
 
@@ -78,6 +102,7 @@ namespace MaximovInk.VoxelEngine
         #endregion
 
         #region Main
+
 
         public void Initialize()
         {
@@ -98,6 +123,8 @@ namespace MaximovInk.VoxelEngine
 
             _isEmpty = true;
             IsLoaded = false;
+
+            OnInitializeModules?.Invoke();
         }
 
         public void UpdateImmediately()
@@ -192,6 +219,17 @@ namespace MaximovInk.VoxelEngine
                 var index = VoxelUtility.PosToIndexInt(position);
                 return _data.Blocks[index];
             }
+        }
+
+        public bool SetColor(Color color, int3 position)
+        {
+            var index = VoxelUtility.PosToIndexInt(position);
+
+            _data.Colors[index] = color;
+
+            _isDirty = true;
+
+            return true;
         }
 
         public bool SetBlock(ushort id, int3 position)

@@ -1,5 +1,5 @@
 using System;
-using MaximovInk;
+using MaximovInk.VoxelEngine.Old;
 using UnityEditor;
 using UnityEngine;
 
@@ -26,7 +26,8 @@ public class GenerationGenericEditor : EditorWindow
 
         var rect = GUILayoutUtility.GetLastRect();
 
-        EditorGUI.DrawPreviewTexture(rect, _generation.TerrainGeneration.Result);
+        if(_generation.TerrainGeneration.Result!=null)
+            EditorGUI.DrawPreviewTexture(rect, _generation.TerrainGeneration.Result);
 
         
     }
