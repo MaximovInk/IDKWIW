@@ -23,8 +23,7 @@ namespace MaximovInk.VoxelEngine
 
         public bool AddObject(VoxelObjectInfo info)
         {
-            /*
-            var prefab = Terrain.ObjectsDatabase.Get(info.PrefabID);
+            var prefab = Terrain.Data.ObjectsDatabase.Get(info.PrefabID);
 
             if (prefab == null) return false;
 
@@ -35,7 +34,7 @@ namespace MaximovInk.VoxelEngine
             info.Instance = instance;
 
             _objects.Add(info);
-*/
+
             return true;
         }
 

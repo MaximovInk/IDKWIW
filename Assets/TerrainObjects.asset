@@ -9,7 +9,8 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7fd9488000d3734a9e00ee676215985, type: 3}
-  m_Name: DefaultVolumeProfile
+  m_Script: {fileID: 11500000, guid: 42b8332e5d1824446b1161727753b2d9, type: 3}
+  m_Name: TerrainObjects
   m_EditorClassIdentifier: 
-  components: []
+  Prefabs:
+  - {fileID: 6057356229421193593, guid: 35f9e7ac2727afd4e9b07dddc5f7b3ea, type: 3}
