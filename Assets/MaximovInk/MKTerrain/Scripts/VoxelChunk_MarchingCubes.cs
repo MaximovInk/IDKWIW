@@ -9,7 +9,7 @@ namespace MaximovInk.VoxelEngine
 {
     public partial class VoxelChunk
     {
-        private NativeHashMap<float3, int> smoothedVerticesCache;
+        private NativeParallelHashMap<float3, int> smoothedVerticesCache;
         private NativeArray<float> cubeValues;
 
         private NativeList<float3> _outputVertices;
@@ -29,7 +29,7 @@ namespace MaximovInk.VoxelEngine
         private void InitializeMarchingCubes()
         {
             smoothedVerticesCache =
-                new NativeHashMap<float3, int>(ChunkSize * ChunkSize * ChunkSize * 16, Allocator.Persistent);
+                new NativeParallelHashMap<float3, int>(ChunkSize * ChunkSize * ChunkSize * 16, Allocator.Persistent);
             cubeValues = new NativeArray<float>(8, Allocator.Persistent);
 
             var voxels = VoxelDatabase.GetAllVoxels();

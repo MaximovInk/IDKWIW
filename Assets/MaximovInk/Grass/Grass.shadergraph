@@ -407,7 +407,6 @@
     "m_OutputNode": {
         "m_Id": ""
     },
-    "m_SubDatas": [],
     "m_ActiveTargets": [
         {
             "m_Id": "dc9447c39c9b411fa489babe1d3e0527"
@@ -2664,6 +2663,8 @@
     "m_AlphaClip": true,
     "m_CastShadows": true,
     "m_ReceiveShadows": false,
+    "m_AdditionalMotionVectorMode": 0,
+    "m_AlembicMotionVectors": false,
     "m_SupportsLODCrossFade": false,
     "m_CustomEditorGUI": "",
     "m_SupportVFX": false

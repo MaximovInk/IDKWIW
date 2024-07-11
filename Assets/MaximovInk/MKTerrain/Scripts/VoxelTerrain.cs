@@ -223,6 +223,39 @@ namespace MaximovInk.VoxelEngine
             return false;
         }
 
+        private void OnDrawGizmos()
+        {
+            if (!Application.isPlaying) return;
+
+            /*
+              var originRaw = WorldToChunkPosition(GetTargetPos());
+             var origin = new Vector3(originRaw.x, originRaw.y, originRaw.z);
+
+             var min = LoaderSettings._loaderMin;
+             var max = LoaderSettings._loaderMax;
+
+             var chunkSize = ChunkBlockSize;
+
+             var size = new Vector3(chunkSize, chunkSize, chunkSize);
+             var halfSize = size / 2f;
+
+             var bounds = new Bounds(origin + size, size);
+
+             for (var ix = -min.x; ix <= max.x; ix++)
+             {
+                 for (var iy = min.y; iy <= max.y; iy++)
+                 {
+                     for (var iz = -min.z; iz <= max.z; iz++)
+                     {
+                         var currentPos = new Vector3(ix* chunkSize + halfSize.x, iy* chunkSize + halfSize.y, iz* chunkSize + halfSize.z);
+
+                         Gizmos.color = Color.green;
+                         Gizmos.DrawWireCube(transform.position + bounds.center + currentPos, bounds.size);
+                     }
+                 }
+             }*/
+        }
+
         private void LoadAroundChunks()
         {
             if (_freeChunks.Count == 0) return;
@@ -234,12 +267,34 @@ namespace MaximovInk.VoxelEngine
 
             foreach (var chunk in _chunksCache.Values)
             {
+                if (chunk.Position.Equals(origin)) continue;
+
+                bool isAlreadyloaded = false;
+
+                for (var ix = -min.x; ix <= max.x; ix++)
+                {
+                    for (var iy = min.y; iy < max.y; iy++)
+                    {
+                        for (var iz = -min.z; iz <= max.z; iz++)
+                        {
+                            var currentPos = origin + new int3(ix, iy, iz);
+
+                            if (chunk.Position.Equals(currentPos) && !(chunk.IsFull() || chunk.IsEmpty())) isAlreadyloaded = true;
+                        }
+                    }
+                }
+
+
+
+                if (isAlreadyloaded) continue;
+
                 chunk.IsLoaded = false;
             }
 
-            for (var ix = -min.x; ix <= max.x; ix++)
+            
+             for (var ix = -min.x; ix <= max.x; ix++)
             {
-                for (var iy = min.y; iy <= max.y; iy++)
+                for (var iy = min.y; iy < max.y; iy++)
                 {
                     for (var iz = -min.z; iz <= max.z; iz++)
                     {
@@ -270,6 +325,7 @@ namespace MaximovInk.VoxelEngine
                 }
             }
 
+             
         }
 
         #region ChunkManipulation

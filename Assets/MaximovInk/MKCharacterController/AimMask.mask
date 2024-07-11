@@ -34,11 +34,11 @@ AvatarMask:
   - m_Path: zxc kid/spine/spine.02/spine.03/spine.003
     m_Weight: 1
   - m_Path: zxc kid/spine/spine.02/spine.03/spine.003/neck
-    m_Weight: 1
+    m_Weight: 0
   - m_Path: zxc kid/spine/spine.02/spine.03/spine.003/neck/head
-    m_Weight: 1
+    m_Weight: 0
   - m_Path: zxc kid/spine/spine.02/spine.03/spine.003/neck/head/head_end
-    m_Weight: 1
+    m_Weight: 0
   - m_Path: zxc kid/spine/spine.02/spine.03/spine.003/shoulder.L
     m_Weight: 1
   - m_Path: zxc kid/spine/spine.02/spine.03/spine.003/shoulder.L/upper_arm.L

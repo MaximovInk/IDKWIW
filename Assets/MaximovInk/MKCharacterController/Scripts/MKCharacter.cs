@@ -116,7 +116,7 @@ namespace MaximovInk
         public NetworkVariable<Vector3> CurrentAimHitPoint = new(writePerm: NetworkVariableWritePermission.Owner);
         public NetworkVariable<Vector3> CurrentAimHitNormal = new(writePerm: NetworkVariableWritePermission.Owner);
         public NetworkVariable<bool> CurrentAimIsHit = new(writePerm: NetworkVariableWritePermission.Owner);
-        public RaycastHit CurrentAimHitResult;
+        private RaycastHit CurrentAimHitResult;
 
         public NetworkVariable<int> WeaponIndex = new(-1, writePerm: NetworkVariableWritePermission.Owner, readPerm: NetworkVariableReadPermission.Everyone);
 
@@ -454,22 +454,29 @@ namespace MaximovInk
                 }
                 else
                 {
-                    _aimTargetPosition = _results[closestIndex].point;
+                    var point = _results[closestIndex].point;
+                    var normal = _results[closestIndex].normal;
 
-                    /*
-                     _currentAimPoint = new AimPointInfo()
+                   if(closestDist < _maxRayDistance)
                     {
-                        Hit = results[closestIndex],
-                        IsHit = true,
-                        Distance = closestDist,
-                    };
-                     */
+                        var playerDelta = point - _camera.transform.position;
+
+                        //var playerDistance = playerDelta.magnitude;
+
+                        //var delta = _maxRayDistance - playerDistance;
+                        //point = point + playerDelta * delta;
+
+                        point = _camera.transform.position + playerDelta.normalized * _maxRayDistance;
+                    }
+
+                    _aimTargetPosition = point;
+
 
                     if (IsOwner)
                     {
                         CurrentAimHitResult = _results[closestIndex];
-                        CurrentAimHitPoint.Value = CurrentAimHitResult.point;
-                        CurrentAimHitNormal.Value = CurrentAimHitResult.normal;
+                        CurrentAimHitPoint.Value = point;
+                        CurrentAimHitNormal.Value = normal;
                         CurrentAimIsHit.Value = true;
                     }
                   
@@ -480,7 +487,6 @@ namespace MaximovInk
             }
         }
 
-
         [ServerRpc]
         private void FireServerRpc()
         {
@@ -490,7 +496,6 @@ namespace MaximovInk
         [ClientRpc]
         private void FireClientRpc()
         {
-
             if(_currentWeapon != null)
                 _currentWeapon.Fire();
         }
@@ -506,8 +511,10 @@ namespace MaximovInk
             
             var speed = _currentWeapon.KickbackWeaponData.KickBackSpeed;
 
-            rot = Quaternion.Lerp(rot, Quaternion.Euler(maxRot, rot.y, rot.z), Time.deltaTime * speed);
-            pos = Vector3.Lerp(pos,  _kickBackInitPos +new Vector3(0, maxPos,0 ), Time.deltaTime * speed);
+            var t = Mathf.Clamp01(Time.deltaTime * speed);
+
+            rot = Quaternion.Lerp(rot, Quaternion.Euler(maxRot, rot.y, rot.z), t);
+            pos = Vector3.Lerp(pos,  _kickBackInitPos +new Vector3(0, maxPos,0 ), t);
 
             _kickbackTransform.SetLocalPositionAndRotation(pos, rot);
         }
@@ -523,18 +530,18 @@ namespace MaximovInk
 
                 _secondHandIK.SetPositionAndRotation(armTarget.position, armTarget.rotation);
             }
-
+            _headIk.transform.position = _aimTargetPosition;
             if (_currentWeapon != null && !_isAiming)
             {
-                _headIk.transform.position = _currentWeapon.AimPoint.transform.position;
+                //_headIk.transform.position = _currentWeapon.AimPoint.transform.position;
 
-                _headRig.weight = Mathf.Lerp(_headRig.weight, 1f, Time.deltaTime * 5f);
+                //_headRig.weight = Mathf.Lerp(_headRig.weight, 0.6f, Time.deltaTime * 5f);
             }
             else
             {
-                _headIk.transform.position = _aimTargetPosition;
+              
 
-                _headRig.weight = Mathf.Lerp(_headRig.weight, 0.3f, Time.deltaTime * 5f);
+                //_headRig.weight = Mathf.Lerp(_headRig.weight, 0.3f, Time.deltaTime * 5f);
             }
 
             if (!IsOwner) return;

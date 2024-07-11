@@ -39,7 +39,7 @@ namespace MaximovInk.VoxelEngine
 
         public NativeArray<float4> _blockColors;
 
-        public NativeHashMap<float3, int> smoothedVerticesCache;
+        public NativeParallelHashMap<float3, int> smoothedVerticesCache;
 
         public NativeList<float3> OutputVertices;
         public NativeList<float3> OutputNormals;

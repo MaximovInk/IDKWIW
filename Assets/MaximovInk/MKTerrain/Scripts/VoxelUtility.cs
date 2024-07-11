@@ -56,9 +56,14 @@ namespace MaximovInk.VoxelEngine
 
             var halfSize = chunkSize / 2;
 
+            var blockSize = VoxelTerrain.BlockSize;
+
+            var chunkBlockSize = chunkSize * blockSize;
+            var chunkBlockHalfSize = halfSize * blockSize;
+
             DrawBox(chunk.transform.position + new Vector3(
-                     halfSize, halfSize, halfSize),
-                Quaternion.identity, new Vector3(chunkSize, chunkSize, chunkSize), Color.blue);
+                     chunkBlockHalfSize, chunkBlockHalfSize, chunkBlockHalfSize),
+                Quaternion.identity, new Vector3(chunkBlockSize, chunkBlockSize, chunkBlockSize), Color.blue);
 
         }
 
