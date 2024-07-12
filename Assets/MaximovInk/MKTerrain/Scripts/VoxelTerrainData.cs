@@ -43,6 +43,19 @@ namespace MaximovInk.VoxelEngine
         public int3 _loaderMin;
     }
 
+    [System.Serializable]
+    public class VoxelTerrainGrassData
+    {
+        public Mesh GrassMesh;
+        public Material GrassMaterial;
+        public Vector3 GrassScale;
+        public float Range = 0.5f;
+        public Vector2 YRandom;
+        public float grassOffset = 0.5f;
+
+        public int DublicatesCount = 0;
+    }
+
 
     [CreateAssetMenu(menuName = "MaximovInk/VoxelTerrainData", fileName = "VoxelTerrainData")]
     public class VoxelTerrainData : ScriptableObject
@@ -57,9 +70,9 @@ namespace MaximovInk.VoxelEngine
         [SerializeField]
         private Material _material;
 
-        public GrassModule GrassModulePrefab;
-
         public int AllocateChunkCount = 512;
+
+        public VoxelTerrainGrassData GrassData; 
 
         public VoxelTerrainLODSettings LODSettings => _lodSettings;
         public VoxelTerrainLoaderSettings LoaderSettings => _loaderSettings;

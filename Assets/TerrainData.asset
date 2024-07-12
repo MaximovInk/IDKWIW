@@ -15,9 +15,16 @@ MonoBehaviour:
   IsoLevel: 25
   FlatShading: 0
   _material: {fileID: 2100000, guid: f933e32f6eec38949840decad10acd78, type: 2}
-  GrassModulePrefab: {fileID: 2172048368702263320, guid: 230cab44f438b5c41a72ad245163866e,
-    type: 3}
   AllocateChunkCount: 256
+  GrassData:
+    GrassMesh: {fileID: -7675060675513433528, guid: 291cdb6d0e0f7ac478a25a763166dd7d,
+      type: 3}
+    GrassMaterial: {fileID: 2100000, guid: 1ccd51ac8eb81634c8b04ac5a1069672, type: 2}
+    GrassScale: {x: 3, y: 3, z: 3}
+    Range: 0.5
+    YRandom: {x: 0.75, y: 1.25}
+    grassOffset: -0.02
+    DublicatesCount: 1
   _lodSettings:
     LODs:
     - LOD: 16
@@ -36,7 +43,7 @@ MonoBehaviour:
       DistanceInChunks: 0
       DistanceDoubled: 0
     Delay: 0.01
-    _timer: 0.0058872947
+    _timer: 0
     LODFreeChunk: 8
   _loaderSettings:
     ChunkAroundUpdate:
@@ -44,7 +51,7 @@ MonoBehaviour:
       y: 1
       z: 8
     Delay: 0.02
-    _timer: 0.0058872947
+    _timer: 0
     _loaderMax:
       x: 4
       y: 1

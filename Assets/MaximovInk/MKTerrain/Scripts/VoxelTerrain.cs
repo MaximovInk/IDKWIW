@@ -44,14 +44,6 @@ namespace MaximovInk.VoxelEngine
         private readonly Dictionary<int3, VoxelChunk> _chunksCache = new();
         private readonly Stack<VoxelChunk> _freeChunks = new();
 
-
-        public Mesh GrassMesh;
-        public Material GrassMaterial;
-        public Vector3 GrassScale;
-        public float Range = 0.5f;
-        public Vector2 YRandom;
-        public float grassOffset = 0.5f;
-
         private void Awake()
         {
             for (int i = 0; i < _data.AllocateChunkCount; i++)

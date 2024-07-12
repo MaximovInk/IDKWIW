@@ -15,6 +15,7 @@ namespace MaximovInk.VoxelEngine
         private event Action OnInitializeModules;
         private event Action OnUpdateModules;
         private event Action OnDestroyModules;
+        private event Action OnDisableModules;
 
         public const int ChunkSize = VoxelTerrain.ChunkSize;
         public static float3 BlockSize => VoxelTerrain.BlockSize;
@@ -67,6 +68,12 @@ namespace MaximovInk.VoxelEngine
 
         #region UnityMessages
 
+        private void Awake()
+        {
+            InstancedAwake();
+            GrassAwake();
+        }
+
         private void Update()
         {
             if (_isDestroyed)
@@ -97,6 +104,11 @@ namespace MaximovInk.VoxelEngine
             _data.Dispose();
 
             OnMarchingCubesDestroy();
+        }
+
+        private void OnDisable()
+        {
+            OnDisableModules?.Invoke();
         }
 
         #endregion

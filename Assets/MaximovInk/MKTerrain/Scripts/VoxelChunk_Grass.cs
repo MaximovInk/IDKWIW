@@ -21,149 +21,26 @@ namespace MaximovInk.VoxelEngine
         private List<Vector3> grassNormals = new();
         private List<Color> grassColors = new();
 
-        private Matrix4x4[] matrices;
-        private MaterialPropertyBlock block;
+       // private Matrix4x4[] matrices;
+       // private MaterialPropertyBlock block;
 
-        private ComputeBuffer meshPropertiesBuffer;
-        private ComputeBuffer argsBuffer;
+        //private ComputeBuffer meshPropertiesBuffer;
+       // private ComputeBuffer argsBuffer;
 
-        private Material _grassMaterial;
+       // private Material _grassMaterial;
 
-        private struct MeshProperties
+        private void GrassAwake()
         {
-            public Matrix4x4 mat;
-            public Vector4 color;
-
-            public static int Size()
-            {
-                return
-                    sizeof(float) * 4 * 4 + // matrix;
-                    sizeof(float) * 4;      // color;
-            }
+            OnInstancedRequestBuild += GrassBuildInstanced;
         }
 
-        private Bounds bounds;
 
-        public int population;
-
-        private void Awake()
-        {
-            OnInitializeModules += VoxelChunk_OnInitializeModules;
-            OnDestroyModules += VoxelChunk_OnDestroyModules;
-
-            OnMeshGenerated += VoxelChunk_OnMeshGenerated;
-
-            OnUpdateModules += VoxelChunk_OnUpdateModules;
-        }
-
-        private void VoxelChunk_OnUpdateModules()
-        {
-            if (population == 0) return;
-
-            //if (!_isVisible) return;
-
-            //Graphics.DrawMeshInstanced(Terrain.GrassMesh, 0, Terrain.GrassMaterial, matrices, population, block);
-
-            if (argsBuffer == null) return;
-
-            Graphics.DrawMeshInstancedIndirect(Terrain.GrassMesh, 0, _grassMaterial, bounds, argsBuffer);
-            //Graphics.DrawMeshInstancedIndirect(Terrain.GrassMesh, 0, Terrain.GrassMaterial, bounds, argsBuffer);
-        }
-
-        private bool _isVisible;
-
-        private void OnBecameInvisible()
-        {
-            _isVisible = false;
-        }
-
-        private void OnBecameVisible()
-        {
-            _isVisible = true;
-        }
-
-        private void VoxelChunk_OnMeshGenerated()
-        {
-            GrassGenerate();
-        }
-
-        private void VoxelChunk_OnDestroyModules()
-        {
-            /*
-               if (_grassModule != null)
-              {
-                  Destroy(_grassModule.gameObject);
-              }*/
-
-            OnInitializeModules -= VoxelChunk_OnInitializeModules;
-            OnDestroyModules -= VoxelChunk_OnDestroyModules;
-            OnMeshGenerated -= VoxelChunk_OnMeshGenerated;
-            OnUpdateModules -= VoxelChunk_OnUpdateModules;
-        }
-
-        private bool _grassGenerated = false;
-
-        private void VoxelChunk_OnInitializeModules()
-        {
-            //GrassGenerate();
-        }
-
-        private float GetHeightPixelAt(int x, int y)
-        {
-            int maxIndex = 0;
-
-            for (int i = 0; i < ChunkSize; i++)
-            {
-                var pos = new Unity.Mathematics.int3(x, i, y);
-
-                var block = GetBlock(pos);
-
-                var valueBlock = GetValue(pos);
-
-                if (block > 0 && valueBlock > Terrain.Data.IsoLevel) maxIndex = i;
-            }
-
-            var valuePos = new Unity.Mathematics.int3(x, maxIndex, y);
-
-            var value = GetValue(valuePos) / 255f;
-
-            return (float)(maxIndex + value) / ChunkSize;
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            for (int i = 0; i < grassPoints.Count; i++)
-            {
-                // Gizmos.DrawWireSphere(grassPoints[i], 0.2f);
-                Gizmos.DrawLine(grassPoints[i], grassPoints[i] + grassNormals[i]);
-            }
-        }
-
-        private void ClearGrass()
+       // private int _grassDublicatesCount = 0;
+        private void GenerateGrassPoints()
         {
             grassPoints.Clear();
             grassNormals.Clear();
             grassColors.Clear();
-            population = 0;
-        }
-
-        private void OnDisable()
-        {
-            if (meshPropertiesBuffer != null)
-            {
-                meshPropertiesBuffer.Release();
-            }
-            meshPropertiesBuffer = null;
-
-            if (argsBuffer != null)
-            {
-                argsBuffer.Release();
-            }
-            argsBuffer = null;
-        }
-
-        private void GenerateGrassPoints()
-        {
 
             var triangles = _mesh.triangles;
             var vertices = _mesh.vertices;
@@ -171,6 +48,8 @@ namespace MaximovInk.VoxelEngine
             var colors = _mesh.colors;
 
             var scaleNoise = 200f;
+
+            var grassDublicatesCount = Terrain.Data.GrassData.DublicatesCount;
 
             for (int i = 0; i < triangles.Length; i += 3)
             {
@@ -205,63 +84,39 @@ namespace MaximovInk.VoxelEngine
                     grassPoints.Add(offset);
                     grassNormals.Add(faceNormal);
                     grassColors.Add(color);
+
+                    for (int k = 0; k < grassDublicatesCount; k++)
+                    {
+                        grassPoints.Add(offset);
+                        grassNormals.Add(faceNormal);
+                        grassColors.Add(color);
+                    }
                 }
             }
-
-            population = grassPoints.Count;
-
-
         }
 
-        private void GenerateMatrices()
+
+
+        private void GrassBuildInstanced()
         {
-            matrices = new Matrix4x4[population];
-            //Vector4[] colors = new Vector4[population];
+            GenerateGrassPoints();
 
-            block = new MaterialPropertyBlock();
-
-            var range = Terrain.Range;
-            var yrandom = Terrain.YRandom;
-            var grassScale = Terrain.GrassScale;
-            var offsett = Terrain.grassOffset;
-
-            //var bounds = new Bounds(transform.position, Vector3.one);
-
-            //var min = bounds.min;
-            //var max = bounds.max;
-
-            for (int i = 0; i < population; i++)
-            {
-                // Build matrix.
-                Vector3 position =
-                    grassPoints[i] +
-                    new Vector3(Random.Range(-range, range), 0, Random.Range(-range, range)) +
-                    grassNormals[i] * offsett;
-
-                Quaternion rotation =
-                    Quaternion.FromToRotation(grassNormals[i], Vector3.up) *
-                    Quaternion.Euler(0f, Random.Range(-180, 180), 0f);
-
-                Vector3 scale = grassScale;
-                scale.y = Random.Range(yrandom.x, yrandom.y);
-
-                var mat = Matrix4x4.TRS(position, rotation, scale);
-
-                matrices[i] = mat;
-
-                //min = Vector3.Min(min, position - scale);
-                //max = Vector3.Max(max, position + scale);
-
-            }
-
+            InitializeBuffers();
         }
+
 
         private void InitializeBuffers()
         {
+
+            var population = grassPoints.Count;
+
             if (population == 0) return;
 
-            var mesh = Terrain.GrassMesh;
-            _grassMaterial = new Material(Terrain.GrassMaterial);
+            var data = Terrain.Data.GrassData;
+
+            var mesh = data.GrassMesh;
+            var material = new Material(data.GrassMaterial);
+            var grassDublicatesCount = data.DublicatesCount;
 
             uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
             // Arguments for drawing mesh.
@@ -270,88 +125,305 @@ namespace MaximovInk.VoxelEngine
             args[1] = (uint)population;
             args[2] = (uint)mesh.GetIndexStart(0);
             args[3] = (uint)mesh.GetBaseVertex(0);
-            argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
+            var argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
             argsBuffer.SetData(args);
 
             MeshProperties[] properties = new MeshProperties[population];
 
-            var range = Terrain.Range;
-            var yrandom = Terrain.YRandom;
-            var grassScale = Terrain.GrassScale;
-            var offsett = Terrain.grassOffset;
-
+            var range = data.Range;
+            var yrandom = data.YRandom;
+            var grassScale = data.GrassScale;
+            var offsett = data.grassOffset;
 
             var chunkSize = VoxelTerrain.ChunkBlockSize;
 
-            var size = new Vector3(chunkSize, chunkSize, chunkSize)/2f;
+            var size = new Vector3(chunkSize, chunkSize, chunkSize) / 2f;
 
-            for (int i = 0; i < population; i++)
+            Vector3 position = Vector3.zero;
+            Quaternion rotation = Quaternion.identity;
+            Vector3 scale = Vector3.one;
+
+            int rotateIndex = 0;
+
+            float rotateAngle = 90 / Mathf.Max(grassDublicatesCount, 1);
+
+            for (int i = 0; i < population; i += grassDublicatesCount + 1)
             {
                 MeshProperties props = new MeshProperties();
-                Vector3 position =
-                     grassPoints[i] +
-                     new Vector3(Random.Range(-range, range), 0, Random.Range(-range, range)) +
-                     grassNormals[i] * offsett - size;
 
-                Quaternion rotation =
-                    Quaternion.FromToRotation(grassNormals[i], Vector3.up) *
-                    Quaternion.Euler(0f, Random.Range(-180, 180), 0f);
+                if (rotateIndex == 0)
+                {
+                    position =
+                   grassPoints[i] +
+                   new Vector3(Random.Range(-range, range), 0, Random.Range(-range, range)) +
+                   grassNormals[i] * offsett - size;
 
-                Vector3 scale = grassScale;
-                scale.y *= Random.Range(yrandom.x, yrandom.y);
+                    rotation =
+                        Quaternion.FromToRotation(grassNormals[i], Vector3.up) *
+                        Quaternion.Euler(0f, Random.Range(-180, 180), 0f);
+
+                    scale = grassScale;
+                    scale.y *= Random.Range(yrandom.x, yrandom.y);
+                }
+                else
+                {
+                    rotation *= Quaternion.Euler(0, rotateAngle, 0);
+                }
+
+                rotateIndex++;
+
 
                 props.mat = Matrix4x4.TRS(position, rotation, scale);
                 props.color = grassColors[i];
 
                 properties[i] = props;
+
+                if (rotateIndex == grassDublicatesCount + 1)
+                    rotateIndex = 0;
             }
 
-            meshPropertiesBuffer = new ComputeBuffer(population, MeshProperties.Size());
+            var meshPropertiesBuffer = new ComputeBuffer(population, MeshProperties.Size());
             meshPropertiesBuffer.SetData(properties);
-            _grassMaterial.SetBuffer("_Properties", meshPropertiesBuffer);
-            //Terrain.GrassMaterial.SetBuffer("_Properties", meshPropertiesBuffer);
+            material.SetBuffer("_Properties", meshPropertiesBuffer);
 
+            AddInstancedInfo(new InstancedInfo
+            {
+                ArgsBuffer = argsBuffer,
+                DrawCount = population,
+                DrawMaterial = material,
+                Mesh = mesh,
+                MeshPropertiesBuffer = meshPropertiesBuffer,
+                Properties = properties
+            });
 
         }
 
-        private void OnDrawGizmos()
+
+        /*
+          private void Awake()
+         {
+             OnInitializeModules += VoxelChunk_OnInitializeModules;
+             OnDestroyModules += VoxelChunk_OnDestroyModules;
+
+             OnMeshGenerated += VoxelChunk_OnMeshGenerated;
+
+             OnUpdateModules += VoxelChunk_OnUpdateModules;
+         }*/
+
+        /*
+         private void VoxelChunk_OnUpdateModules()
         {
-            if (population == 0 || LOD != 1) return;
+            if (population == 0) return;
 
-            Gizmos.color = Color.red;
-            Gizmos.DrawWireCube(bounds.center, bounds.size);
-        }
+            //if (!_isVisible) return;
 
-        private void GrassGenerate()
+            //Graphics.DrawMeshInstanced(Terrain.GrassMesh, 0, Terrain.GrassMaterial, matrices, population, block);
+
+            if (argsBuffer == null) return;
+
+            var data = Terrain.Data.GrassData;
+
+            Graphics.DrawMeshInstancedIndirect(data.GrassMesh, 0, _grassMaterial, bounds, argsBuffer);
+            //Graphics.DrawMeshInstancedIndirect(Terrain.GrassMesh, 0, Terrain.GrassMaterial, bounds, argsBuffer);
+        }*/
+
+
+        /*
+          private void VoxelChunk_OnMeshGenerated()
+         {
+             GrassGenerate();
+         }*/
+        /*
+
+                private void VoxelChunk_OnDestroyModules()
+                {
+                    OnInitializeModules -= VoxelChunk_OnInitializeModules;
+                    OnDestroyModules -= VoxelChunk_OnDestroyModules;
+                    OnMeshGenerated -= VoxelChunk_OnMeshGenerated;
+                    OnUpdateModules -= VoxelChunk_OnUpdateModules;
+                }*/
+
+        // private bool _grassGenerated = false;
+
+        /* private void VoxelChunk_OnInitializeModules()
+         {
+             //GrassGenerate();
+         }
+ */
+        private float GetHeightPixelAt(int x, int y)
         {
-            ClearGrass();
+            int maxIndex = 0;
 
-            if (_data.IsEmpty()) return;
-            if (_data.IsFull()) return;
+            for (int i = 0; i < ChunkSize; i++)
+            {
+                var pos = new Unity.Mathematics.int3(x, i, y);
 
-            if (LOD != 1) return;
+                var block = GetBlock(pos);
 
-            var before = Random.state;
+                var valueBlock = GetValue(pos);
 
-            var seed = (int)((Position.x + 0.23f) * 2f + (Position.z - 0.435f) / 2f);
+                if (block > 0 && valueBlock > Terrain.Data.IsoLevel) maxIndex = i;
+            }
 
-            Random.InitState(seed);
+            var valuePos = new Unity.Mathematics.int3(x, maxIndex, y);
 
-            var chunkSize = VoxelTerrain.ChunkBlockSize;
+            var value = GetValue(valuePos) / 255f;
 
-            var size = new Vector3(chunkSize, chunkSize, chunkSize);
-
-            bounds = new Bounds(transform.position + size / 2f, size);
-
-            GenerateGrassPoints();
-
-            //GenerateMatrices();
-
-            InitializeBuffers();
-
-            Random.state = before;
+            return (float)(maxIndex + value) / ChunkSize;
         }
 
+        private void OnDrawGizmosSelected()
+        {
+            for (int i = 0; i < grassPoints.Count; i++)
+            {
+                // Gizmos.DrawWireSphere(grassPoints[i], 0.2f);
+                Gizmos.DrawLine(grassPoints[i], grassPoints[i] + grassNormals[i]);
+            }
+        }
+
+
+        /*
+          private void OnDisable()
+         {
+             if (meshPropertiesBuffer != null)
+             {
+                 meshPropertiesBuffer.Release();
+             }
+             meshPropertiesBuffer = null;
+
+             if (argsBuffer != null)
+             {
+                 argsBuffer.Release();
+             }
+             argsBuffer = null;
+         }
+         */
+
+        /*
+         
+
+         
+
+
+           private void InitializeBuffers()
+           {
+
+               if (population == 0) return;
+
+               var data = Terrain.Data.GrassData;
+
+               var mesh = data.GrassMesh;
+               _grassMaterial = new Material(data.GrassMaterial);
+
+               uint[] args = new uint[5] { 0, 0, 0, 0, 0 };
+               // Arguments for drawing mesh.
+               // 0 == number of triangle indices, 1 == population, others are only relevant if drawing submeshes.
+               args[0] = (uint)mesh.GetIndexCount(0);
+               args[1] = (uint)population;
+               args[2] = (uint)mesh.GetIndexStart(0);
+               args[3] = (uint)mesh.GetBaseVertex(0);
+               argsBuffer = new ComputeBuffer(1, args.Length * sizeof(uint), ComputeBufferType.IndirectArguments);
+               argsBuffer.SetData(args);
+
+               MeshProperties[] properties = new MeshProperties[population];
+
+               var range = data.Range;
+               var yrandom = data.YRandom;
+               var grassScale = data.GrassScale;
+               var offsett = data.grassOffset;
+
+               var chunkSize = VoxelTerrain.ChunkBlockSize;
+
+               var size = new Vector3(chunkSize, chunkSize, chunkSize)/2f;
+
+               Vector3 position = Vector3.zero;
+               Quaternion rotation = Quaternion.identity;
+               Vector3 scale = Vector3.one;
+
+               int rotateIndex = 0;
+
+               float rotateAngle = 90 / Mathf.Max(_grassDublicatesCount, 1);
+
+               for (int i = 0; i < population; i+= _grassDublicatesCount+1)
+               {
+                   MeshProperties props = new MeshProperties();
+
+                   if (rotateIndex == 0)
+                   {
+                       position =
+                      grassPoints[i] +
+                      new Vector3(Random.Range(-range, range), 0, Random.Range(-range, range)) +
+                      grassNormals[i] * offsett - size;
+
+                       rotation =
+                           Quaternion.FromToRotation(grassNormals[i], Vector3.up) *
+                           Quaternion.Euler(0f, Random.Range(-180, 180), 0f);
+
+                       scale = grassScale;
+                       scale.y *= Random.Range(yrandom.x, yrandom.y);
+                   }
+                   else
+                   {
+                       rotation *= Quaternion.Euler(0, rotateAngle, 0);
+                   }
+
+                   rotateIndex++;
+
+
+                   props.mat = Matrix4x4.TRS(position, rotation, scale);
+                   props.color = grassColors[i];
+
+                   properties[i] = props;
+
+                   if (rotateIndex == _grassDublicatesCount+1)
+                       rotateIndex = 0;
+               }
+
+               meshPropertiesBuffer = new ComputeBuffer(population, MeshProperties.Size());
+               meshPropertiesBuffer.SetData(properties);
+               _grassMaterial.SetBuffer("_Properties", meshPropertiesBuffer);
+
+
+           }
+
+           private void OnDrawGizmos()
+           {
+               if (population == 0 || LOD != 1) return;
+
+               Gizmos.color = Color.red;
+               Gizmos.DrawWireCube(bounds.center, bounds.size);
+           }
+
+           private void GrassGenerate()
+           {
+               ClearGrass();
+
+               if (_data.IsEmpty()) return;
+               if (_data.IsFull()) return;
+
+               if (LOD != 1) return;
+
+               var before = Random.state;
+
+               var seed = (int)((Position.x + 0.23f) * 2f + (Position.z - 0.435f) / 2f);
+
+               Random.InitState(seed);
+
+               var chunkSize = VoxelTerrain.ChunkBlockSize;
+
+               var size = new Vector3(chunkSize, chunkSize, chunkSize);
+
+               bounds = new Bounds(transform.position + size / 2f, size);
+
+               GenerateGrassPoints();
+
+               //GenerateMatrices();
+
+               InitializeBuffers();
+
+               Random.state = before;
+           }
+   */
 
     }
 }
