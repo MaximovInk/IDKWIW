@@ -20,6 +20,18 @@ MonoBehaviour:
     MaximumDurability: 100
     CanDurabilityStack: 0
     MaxCount: 1
-    CustomWorldItem: {fileID: 0}
     CustomModel: {fileID: 6414660052822568461, guid: 7184e9e871e2dfc44a37fd8e85694942,
       type: 3}
+    CustomDataInt: 0
+    CustomDataString: 
+  - ID: CPRifle
+    Icon: {fileID: 21300000, guid: 917a670a5bf024c4ebca323d91e459f3, type: 3}
+    Type: 3
+    IsDurable: 1
+    MaximumDurability: 100
+    CanDurabilityStack: 0
+    MaxCount: 1
+    CustomModel: {fileID: 2055910791482795574, guid: 19a85261a7bfcbc4ca2822cd8a464d54,
+      type: 3}
+    CustomDataInt: 1
+    CustomDataString: 

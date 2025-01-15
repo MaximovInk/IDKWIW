@@ -1,0 +1,11 @@
+Model Information:
+* title:	Roads
+* source:	https://sketchfab.com/3d-models/roads-521d7ac886a34a01bddbd13a0bd4c3ed
+* author:	Elbolillo (https://sketchfab.com/Elbolilloduro)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Roads" (https://sketchfab.com/3d-models/roads-521d7ac886a34a01bddbd13a0bd4c3ed) by Elbolillo (https://sketchfab.com/Elbolilloduro) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

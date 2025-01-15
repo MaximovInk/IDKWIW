@@ -20,9 +20,8 @@ namespace MaximovInk.VoxelEngine
 
         private NativeArray<float4> _blockColors;
 
-
-        public NativeList<int> VertexToIndex => _vertexToIndex;
-        private NativeList<int> _vertexToIndex;
+        public NativeList<ushort> VertexToBlockIndex => _vertexToBlockIndex;
+        private NativeList<ushort> _vertexToBlockIndex;
 
         private float _isoLevel;
 
@@ -46,7 +45,7 @@ namespace MaximovInk.VoxelEngine
             _outputColors = new NativeList<float4>(0, Allocator.Persistent);
             _outputTriangles = new NativeList<int>(0, Allocator.Persistent);
             _outputUvs = new NativeList<float2>(0, Allocator.Persistent);
-            _vertexToIndex = new NativeList<int>(0, Allocator.Persistent);
+            _vertexToBlockIndex = new NativeList<ushort>(0, Allocator.Persistent);
         }
 
         private void OnMarchingCubesDestroy()
@@ -64,13 +63,20 @@ namespace MaximovInk.VoxelEngine
             _outputNormals.Dispose();
             _outputUvs.Dispose();
 
-            _vertexToIndex.Dispose();
+            _vertexToBlockIndex.Dispose();
         }
 
         private JobHandle _handle;
         private MarchingCubesJob _currentJob;
 
         private bool _isRunning;
+
+        private NativeArray<byte> GetNeighborData(VoxelChunk neighbor)
+        {
+            return neighbor != null && !neighbor.IsEmpty() 
+                ? new NativeArray<byte>(neighbor._data.Value, Allocator.TempJob) 
+                : new NativeArray<byte>(0, Allocator.TempJob);
+        }
 
         private void Generate()
         {
@@ -92,40 +98,54 @@ namespace MaximovInk.VoxelEngine
             _outputTriangles.Clear();
             _outputNormals.Clear();
             _outputUvs.Clear();
-            _vertexToIndex.Clear();
+            _vertexToBlockIndex.Clear();
 
             _currentJob = new MarchingCubesJob
             {
-                smoothedVerticesCache = smoothedVerticesCache,
-                cubeValues = cubeValues,
-                _data = new NativeArray<ushort>(_data.Blocks, Allocator.TempJob),
-                _values = new NativeArray<byte>(_data.Value, Allocator.TempJob),
-                _colors = new NativeArray<Color>(_data.Colors, Allocator.TempJob),
-                lod = _lod,
-                smoothing = !Terrain.FlatShading,
-                _isoLevelByte = Terrain.IsoLevel,
-                _isoLevel = Terrain.IsoLevel / 255f,
-                _blockColors = _blockColors,
+                BlockData = new NativeArray<ushort>(_data.Blocks, Allocator.TempJob),
+                Values = new NativeArray<byte>(_data.Value, Allocator.TempJob),
+                Colors = new NativeArray<Color>(_data.Colors, Allocator.TempJob),
+                LOD = _lod,
+                EnableSmoothing = !Terrain.FlatShading,
+                IsoLevelByte = Terrain.IsoLevel,
+                IsoLevel = Terrain.IsoLevel / 255f,
                 OutputVertices = _outputVertices,
                 OutputNormals = _outputNormals,
                 OutputColors = _outputColors,
                 OutputTriangles = _outputTriangles,
-                VertexToIndex = _vertexToIndex,
+                VertexToIndex = _vertexToBlockIndex,
                 OutputUVs = _outputUvs
             };
 
-            _currentJob.valuesForward = _neighbors.Forward != null && !_neighbors.Forward.IsEmpty() ? new NativeArray<byte>(_neighbors.Forward._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
-            _currentJob.valuesRight = _neighbors.Right != null && !_neighbors.Right.IsEmpty() ? new NativeArray<byte>(_neighbors.Right._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
-            _currentJob.valuesTop = _neighbors.Top != null && !_neighbors.Top.IsEmpty() ? new NativeArray<byte>(_neighbors.Top._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
-
-            _currentJob.valuesForwardRight = _neighbors.ForwardRight != null && !_neighbors.ForwardRight.IsEmpty() ? new NativeArray<byte>(_neighbors.ForwardRight._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
-            _currentJob.valuesTopRight = _neighbors.TopRight != null && !_neighbors.TopRight.IsEmpty() ? new NativeArray<byte>(_neighbors.TopRight._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
-            _currentJob.valuesForwardRightTop = _neighbors.ForwardTopRight != null && !_neighbors.ForwardTopRight.IsEmpty() ? new NativeArray<byte>(_neighbors.ForwardTopRight._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
-            _currentJob.valuesForwardTop = _neighbors.ForwardTop != null && !_neighbors.ForwardTop.IsEmpty() ? new NativeArray<byte>(_neighbors.ForwardTop._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.DensityForwardNeighbor = HasNeighbor(_neighbors.Forward) ? new NativeArray<byte>(_neighbors.Forward._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.LODForward = HasNeighbor(_neighbors.Forward) ? _neighbors.Forward.LOD : _lod;
+            
+            _currentJob.DensityRightNeighbor = HasNeighbor(_neighbors.Right) ? new NativeArray<byte>(_neighbors.Right._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.LODRight = HasNeighbor(_neighbors.Right) ? _neighbors.Right.LOD : _lod;
+           
+            _currentJob.DensityTopNeighbor = HasNeighbor(_neighbors.Top) ? new NativeArray<byte>(_neighbors.Top._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.LODTop = HasNeighbor(_neighbors.Top) ? _neighbors.Top.LOD : _lod;
+            
+            _currentJob.DensityForwardRightNeighbor = HasNeighbor(_neighbors.ForwardRight) ? new NativeArray<byte>(_neighbors.ForwardRight._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.LODForwardRight = HasNeighbor(_neighbors.ForwardRight) ? _neighbors.ForwardRight.LOD : _lod;
+           
+            _currentJob.DensityTopRightNeighbor = HasNeighbor(_neighbors.TopRight) ? new NativeArray<byte>(_neighbors.TopRight._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.LODTopRight = HasNeighbor(_neighbors.TopRight) ? _neighbors.TopRight.LOD : _lod;
+           
+            _currentJob.DensityForwardRightTopNeighbor = HasNeighbor(_neighbors.ForwardTopRight) ? new NativeArray<byte>(_neighbors.ForwardTopRight._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.LODForwardRightTop = HasNeighbor(_neighbors.ForwardTopRight) ? _neighbors.ForwardTopRight.LOD : _lod;
+           
+            _currentJob.DensityForwardTopNeighbor = HasNeighbor(_neighbors.ForwardTop) ? new NativeArray<byte>(_neighbors.ForwardTop._data.Value, Allocator.TempJob) : new NativeArray<byte>(0, Allocator.TempJob);
+            _currentJob.LODForwardTop = HasNeighbor(_neighbors.ForwardTop) ? _neighbors.ForwardTop.LOD : _lod;
 
             _handle = _currentJob.Schedule();
 
             StartCoroutine(WaitFor(_handle));
+        }
+
+        private bool HasNeighbor(VoxelChunk chunk)
+        {
+            return chunk != null && !chunk.IsEmpty();
         }
 
 
@@ -135,21 +155,21 @@ namespace MaximovInk.VoxelEngine
 
             job.Complete();
 
-            _isEmpty = _currentJob._isEmpty;
-            _isFull = _currentJob._isFull;
+            _isEmpty = _currentJob.IsEmpty;
+            _isFull = _currentJob.IsFull;
 
-            _currentJob.valuesForward.Dispose();
-            _currentJob.valuesRight.Dispose();
-            _currentJob.valuesTop.Dispose();
+            _currentJob.DensityForwardNeighbor.Dispose();
+            _currentJob.DensityRightNeighbor.Dispose();
+            _currentJob.DensityTopNeighbor.Dispose();
 
-            _currentJob.valuesForwardRight.Dispose();
-            _currentJob.valuesTopRight.Dispose();
-            _currentJob.valuesForwardRightTop.Dispose();
-            _currentJob.valuesForwardTop.Dispose();
+            _currentJob.DensityForwardRightNeighbor.Dispose();
+            _currentJob.DensityTopRightNeighbor.Dispose();
+            _currentJob.DensityForwardRightTopNeighbor.Dispose();
+            _currentJob.DensityForwardTopNeighbor.Dispose();
 
-            _currentJob._colors.Dispose();
-            _currentJob._data.Dispose();
-            _currentJob._values.Dispose();
+            _currentJob.Colors.Dispose();
+            _currentJob.BlockData.Dispose();
+            _currentJob.Values.Dispose();
 
             _mesh.Clear();
 

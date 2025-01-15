@@ -1,0 +1,58 @@
+{
+  "asset": {
+    "generator": "UnityGLTF",
+    "version": "2.0"
+  },
+  "images": [
+    {
+      "uri": "Ladder_Railing_FLight_Mat_normal.jpg",
+      "name": "Ladder_Railing_FLight_Mat_normal"
+    },
+    {
+      "uri": "Ladder_Railing_FLight_Mat_baseColor.png",
+      "name": "Ladder_Railing_FLight_Mat_baseColor"
+    },
+    {
+      "uri": "Ladder_Railing_FLight_Mat_metallicRoughness.jpg",
+      "name": "Ladder_Railing_FLight_Mat_metallicRoughness"
+    }
+  ],
+  "materials": [
+    {
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 1
+        },
+        "metallicRoughnessTexture": {
+          "index": 2
+        }
+      },
+      "normalTexture": {
+        "index": 0
+      },
+      "name": "Ladder_Railing_FLight_Mat"
+    }
+  ],
+  "samplers": [
+    {
+      "minFilter": 9987
+    }
+  ],
+  "textures": [
+    {
+      "sampler": 0,
+      "source": 0,
+      "name": "Ladder_Railing_FLight_Mat_normal"
+    },
+    {
+      "sampler": 0,
+      "source": 1,
+      "name": "Ladder_Railing_FLight_Mat_baseColor"
+    },
+    {
+      "sampler": 0,
+      "source": 2,
+      "name": "Ladder_Railing_FLight_Mat_metallicRoughness"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+Model Information:
+* title:	Electrical Wiring
+* source:	https://sketchfab.com/3d-models/electrical-wiring-0088c99f46aa4661b0dc91dbf7119c88
+* author:	Zillious (https://sketchfab.com/zillious)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Electrical Wiring" (https://sketchfab.com/3d-models/electrical-wiring-0088c99f46aa4661b0dc91dbf7119c88) by Zillious (https://sketchfab.com/zillious) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

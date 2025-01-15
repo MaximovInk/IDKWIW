@@ -17,7 +17,14 @@ MonoBehaviour:
     Prefab: {fileID: 6018800095778978574, guid: 22680e2405ac99741ba4bbe8263412e6,
       type: 3}
     Capacity: 100
+    AutoCapacity: 0
   - ID: BulletHole
     Prefab: {fileID: 8180961002241516977, guid: 85823f01cde9a484db6acff4c013ac36,
       type: 3}
     Capacity: 100
+    AutoCapacity: 0
+  - ID: tree
+    Prefab: {fileID: 1510100012425503672, guid: a21cba06d5143f745a90805ee9dd27c3,
+      type: 3}
+    Capacity: 500
+    AutoCapacity: 1

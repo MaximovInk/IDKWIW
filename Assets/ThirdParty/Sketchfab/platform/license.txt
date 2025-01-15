@@ -1,0 +1,11 @@
+Model Information:
+* title:	Rigged Sci-Fi Lift - Mobile Platform - Elevator
+* source:	https://sketchfab.com/3d-models/rigged-sci-fi-lift-mobile-platform-elevator-eb53f74f3a8942608925358cdc21ca3d
+* author:	re1monsen (https://sketchfab.com/re1monsen)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Rigged Sci-Fi Lift - Mobile Platform - Elevator" (https://sketchfab.com/3d-models/rigged-sci-fi-lift-mobile-platform-elevator-eb53f74f3a8942608925358cdc21ca3d) by re1monsen (https://sketchfab.com/re1monsen) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

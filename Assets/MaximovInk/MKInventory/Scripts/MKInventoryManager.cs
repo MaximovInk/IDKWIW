@@ -60,6 +60,8 @@ namespace MaximovInk
                 {
                     if (MKCharacterManager.Instance.IsValid)
                     {
+                        Debug.Log($"{slot.Item.ItemID} {data.CustomDataInt}");
+
                         MKCharacterManager.Instance.Current.WeaponIndex.Value = data.CustomDataInt;
 
                         slot.Container.OnDeselect += ResetWeapon;

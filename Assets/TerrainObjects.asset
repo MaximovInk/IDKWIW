@@ -12,5 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 42b8332e5d1824446b1161727753b2d9, type: 3}
   m_Name: TerrainObjects
   m_EditorClassIdentifier: 
-  Prefabs:
-  - {fileID: 6057356229421193593, guid: 35f9e7ac2727afd4e9b07dddc5f7b3ea, type: 3}
+  Data:
+  - CustomID: tree
+    UsePool: 1
+    Prefab: {fileID: 0}
+    MinScale: {x: 1, y: 0.4, z: 1}
+    MaxScale: {x: 1, y: 1.2, z: 1}
+    YRotationRange: 180
+    XRotationRange: 1
+    ZRotationRange: 1

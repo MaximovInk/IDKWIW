@@ -53,19 +53,38 @@ namespace MaximovInk.VoxelEngine
 
             for (int i = 0; i < triangles.Length; i += 3)
             {
-                var P1 = vertices[triangles[i]];
-                var P2 = vertices[triangles[i + 1]];
-                var P3 = vertices[triangles[i + 2]];
+                var tIndex = triangles[i];
+                var tIndex1 = triangles[i + 1];
+                var tIndex2 = triangles[i + 2];
+
+                var P1 = vertices[tIndex];
+                var P2 = vertices[tIndex1];
+                var P3 = vertices[tIndex2];
+
+                if(tIndex >= _vertexToBlockIndex.Length) continue;
+                if (tIndex1 >= _vertexToBlockIndex.Length) continue;
+                if (tIndex2 >= _vertexToBlockIndex.Length) continue;
+
+                if(_vertexToBlockIndex[tIndex] >= _data.Blocks.Length) continue;
+                if(_vertexToBlockIndex[tIndex1] >= _data.Blocks.Length) continue;
+                if(_vertexToBlockIndex[tIndex2] >= _data.Blocks.Length) continue;
+
+                if (!Terrain.Data.GetBiomeFromBlock(_data.Blocks[_vertexToBlockIndex[tIndex]]-1).GenGrass &&
+                    !Terrain.Data.GetBiomeFromBlock(_data.Blocks[_vertexToBlockIndex[tIndex1]]-1).GenGrass &&
+                    !Terrain.Data.GetBiomeFromBlock(_data.Blocks[_vertexToBlockIndex[tIndex2]]-1).GenGrass)
+                    continue;
+                
+                //if (_data.Blocks[_vertexToBlockIndex[tIndex]])
 
                 var noiseVal = IcariaNoise.GradientNoise((P1.x + Position.x) / scaleNoise, (P2.z + Position.z) / scaleNoise);
 
                 if (noiseVal < -0.5f) continue;
 
-                var N1 = normals[triangles[i]];
-                var N2 = normals[triangles[i + 1]];
-                var N3 = normals[triangles[i + 2]];
+                var N1 = normals[tIndex];
+                var N2 = normals[tIndex1];
+                var N3 = normals[tIndex2];
 
-                var color = colors[triangles[i]];
+                var color = colors[tIndex];
 
                 var center = ((P1 + P2 + P3) / 3);
                 var faceNormal = ((N1 + N2 + N3) / 3);

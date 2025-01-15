@@ -10,6 +10,15 @@ namespace MaximovInk.VoxelEngine
         private const byte VOXEL_Z_SHIFT = 8;
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static int3 LocalGridToGlobalGrid(VoxelChunk chunk, int3 localPos)
+        {
+            return new int3(
+                localPos.x + chunk.Position.x * VoxelTerrain.ChunkSize,
+                localPos.y + chunk.Position.y * VoxelTerrain.ChunkSize,
+                localPos.z + chunk.Position.z * VoxelTerrain.ChunkSize);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int PosToIndexInt(int3 pos)
         {
             return (pos.x | pos.y << VOXEL_Y_SHIFT | pos.z << VOXEL_Z_SHIFT);

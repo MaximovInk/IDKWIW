@@ -1,0 +1,11 @@
+Model Information:
+* title:	Repeater Radio Tower
+* source:	https://sketchfab.com/3d-models/repeater-radio-tower-f17b20e7e13546efac44aff1f097ef25
+* author:	Veterock (https://sketchfab.com/windofglass)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Repeater Radio Tower" (https://sketchfab.com/3d-models/repeater-radio-tower-f17b20e7e13546efac44aff1f097ef25) by Veterock (https://sketchfab.com/windofglass) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

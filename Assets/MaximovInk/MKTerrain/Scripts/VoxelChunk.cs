@@ -1,4 +1,5 @@
 ﻿using System;
+using Unity.Collections;
 using Unity.Mathematics;
 using UnityEngine;
 using UnityEngine.Profiling;
@@ -38,11 +39,13 @@ namespace MaximovInk.VoxelEngine
         public VoxelTerrain Terrain;
 
         private ChunkData _data;
+      
 
         private bool _isInitialized;
         private bool _isDestroyed;
         private bool _isDirty;
 
+        public ChunkNeighbors Neighbors => _neighbors;
         private ChunkNeighbors _neighbors;
 
         public int LOD
@@ -52,11 +55,16 @@ namespace MaximovInk.VoxelEngine
             {
                 _isDirty = _lod != value;
 
+                _lastLod = _lod;
+
                 _lod = value;
 
                 ValidateLodValue();
             }
         }
+
+        public int PreviousLOD => _lastLod;
+        private int _lastLod = 1;
 
         [SerializeField]
         private int _lod;
@@ -232,6 +240,7 @@ namespace MaximovInk.VoxelEngine
                 return _data.Blocks[index];
             }
         }
+
 
         public bool SetColor(Color color, int3 position)
         {

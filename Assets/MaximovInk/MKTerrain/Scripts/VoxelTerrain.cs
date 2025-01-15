@@ -541,6 +541,19 @@ namespace MaximovInk.VoxelEngine
             return true;
         }
 
+        public bool SetColor(Color color, int3 position)
+        {
+            var chunk = GetOrCreateChunk(position);
+            var chunkInsideGridPos = PositionToChunk(position);
+
+            var changed = chunk.SetColor(color, chunkInsideGridPos);
+
+            if (!changed) return false;
+
+            return true;
+
+        }
+
         public ushort GetBlock(int3 position)
         {
             var chunk = GetOrCreateChunk(position);

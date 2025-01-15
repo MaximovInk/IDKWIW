@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System.Linq;
+using UnityEngine;
 
 namespace MaximovInk
 {
@@ -8,6 +9,8 @@ namespace MaximovInk
         public string ID;
         public GameObject Prefab;
         public int Capacity;
+
+        public bool AutoCapacity;
     }
 
     [CreateAssetMenu(fileName = "MKPool", menuName = "MaximovInk/MKPool")]
@@ -16,6 +19,11 @@ namespace MaximovInk
         public ObjectInfo[] Get() => _prefabs;
 
         [SerializeField] private ObjectInfo[] _prefabs;
+
+        public ObjectInfo Info(string ID)
+        {
+            return _prefabs.FirstOrDefault(n => n.ID == ID);
+        }
 
     }
 }

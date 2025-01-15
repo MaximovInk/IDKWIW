@@ -1,8 +1,6 @@
 ﻿using System;
 using Icaria.Engine.Procedural;
-using Unity.VisualScripting;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -47,6 +45,8 @@ namespace MaximovInk.VoxelEngine
         {
             //t = Mathf.Clamp01(t);
 
+            t = Mathf.Clamp(t,0f, 10f);
+
             return Color.Evaluate(t);
         }
 
@@ -57,6 +57,9 @@ namespace MaximovInk.VoxelEngine
 
             foreach (var octave in CustomOctaves)
             {
+                octave.ScaleX = Mathf.Max(octave.ScaleX, 0.001f);
+                octave.ScaleY = Mathf.Max(octave.ScaleY, 0.001f);
+
                 var nx = (x+ octave.OffsetX) / octave.ScaleX;
                 var ny = (y + octave.OffsetY) / octave.ScaleY ;
 
@@ -82,8 +85,16 @@ namespace MaximovInk.VoxelEngine
 
             for (int i = 0; i < Octaves; i++)
             {
-                var sampleX = (x+ OffsetX + _offsets[i].x) / ScaleX * frequency ;
-                var sampleY = (y + OffsetY + _offsets[i].y) / ScaleY * frequency ;
+
+
+                var dX = ScaleX * frequency;
+                var dY = ScaleY * frequency;
+
+                dX = Mathf.Max(dX, 0.001f);
+                dY = Mathf.Max(dY, 0.001f);
+
+                var sampleX = (x+ OffsetX + _offsets[i].x) / dX;
+                var sampleY = (y + OffsetY + _offsets[i].y) / dY;
 
                 var sample = MKNoiseUtils.Gradient(sampleX, sampleY, Seed) * 2 - 1;
                 
@@ -127,6 +138,11 @@ namespace MaximovInk.VoxelEngine
 
             return value;
         }
+
+        public float EvaluateCellular(float x, float y, ref float d0)
+        {
+            return CustomOctaves[0].EvaluateCellular(x,y, ref d0, Seed);
+        }
     }
 
     [System.Serializable]
@@ -144,6 +160,24 @@ namespace MaximovInk.VoxelEngine
         public int Seed;
 
         public float Weight = 1f;
+
+        public float EvaluateCellular(float x, float y, ref float d0, int seed = 0)
+        {
+            var value = 0f;
+
+            seed += Seed;
+
+            value = MKNoiseUtils.Cellular(x, y, ref d0, seed);
+
+            if (Round > 0.01f)
+            {
+                value = Mathf.Round(value * Round) / Round;
+            }
+
+            value = Mathf.Clamp01(value);
+
+            return value;
+        }
 
         public float Evaluate(float x, float y, int seed = 0)
         {
@@ -184,6 +218,15 @@ namespace MaximovInk.VoxelEngine
         public static float Cellular(float x, float y, int seed = 0)
         {
             return IcariaNoise.CellularNoise(x, y, seed).r;
+        }
+
+        public static float Cellular(float x, float y, ref float d0, int seed = 0)
+        {
+            var t = IcariaNoise.CellularNoise(x, y, seed);
+
+            d0 = t.d0;
+
+            return t.r;
         }
     }
 }

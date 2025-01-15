@@ -11,17 +11,20 @@ Shader "Custom/InstancedIndirectColor" {
 
     SubShader {
         Blend SrcAlpha OneMinusSrcAlpha
-       Cull Off 
-        //Tags { "RenderType" = "Opaque" }
-         // Tags { "RenderType"="TransparentCutout" "Queue"="AlphaTest" }
-         //Tags {"Queue"="AlphaTest" "IgnoreProjector"="True" "RenderType"="TransparentCutout"}
-            Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
+        Tags { "IgnoreProjector"="True" "RenderType"="Grass" "DisableBatching"="True"}
+        Cull Off 
 
+           
         Pass {
+           // Tags{ "LightMode" = "ForwardBase" }
+
+
             CGPROGRAM
             #pragma vertex vert alphatest:_Cutoff 
             #pragma fragment frag 
 
+             #pragma multi_compile_fwdbase
+             #include "AutoLight.cginc"
             #include "UnityCG.cginc"
 
             struct appdata_t {
@@ -36,6 +39,8 @@ Shader "Custom/InstancedIndirectColor" {
                 fixed4 color    : COLOR;
                 float2 uv : TEXCOORD0;
                 float dist : TEXCOORD1;
+
+                float4 _ShadowCoord : TEXCOORD2;
             }; 
 
             struct MeshProperties {
@@ -63,9 +68,9 @@ Shader "Custom/InstancedIndirectColor" {
                 o.vertex = UnityObjectToClipPos(pos);
                 o.color = _Properties[instanceID].color;
                 o.uv = i.uv;
-
                 o.dist = (length(UnityObjectToViewPos(i.vertex)))/_DistanceLerp;
 
+                o._ShadowCoord = ComputeScreenPos(o.vertex);
                 return o;
             }
 
@@ -74,20 +79,15 @@ Shader "Custom/InstancedIndirectColor" {
                 //return i.color;
                 half4 texC = tex2D(_BaseMap, i.uv).rgba;
                 clip(texC.a - 0.5);
-
                 float d = i.dist;
-
                 fixed4 lerpedColor = lerp(_Color,_ColorTip,  clamp(i.uv.y + _TipOffset,0,1));
-
                 d = clamp(d - _MinDistance,0,1.0);
-
-
-               // return lerpedColor * texC * i.color;
+                fixed4 pixel = lerp(lerpedColor * texC * i.color, _ColorDistance, d);
                 
+               // float attenuation = SHADOW_ATTENUATION(i);
+               // return pixel*attenuation;
 
-                return lerp(lerpedColor * texC * i.color, _ColorDistance, d);
-              
-                //return lerpedColor * texC * i.color;
+               return pixel; 
             }
 
             ENDCG

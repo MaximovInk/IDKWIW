@@ -77,7 +77,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 856403667
+  GlobalObjectIdHash: 2120114781
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -169,7 +169,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _entityHeight: 3
-  _slopeLimit: 30
+  _slopeLimit: 60
   _jumpHeight: 2
   _groundLayerMask:
     serializedVersion: 2
@@ -187,7 +187,7 @@ MonoBehaviour:
   _maxPitch: 75
   _cameraRoot: {fileID: 3178784892969759182}
   _camera: {fileID: 1387667985371538688}
-  MaxDistance: 9
+  MaxDistance: 25
   MinDistance: 0.5
   _targetOffset: {x: 0.5, y: 0.5, z: 0}
   _lookAroundTargetOffset: {x: 0, y: 0.5, z: 0}
@@ -865,7 +865,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3c430f382484144e925c097c2d33cfe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  m_Weight: 0.678
+  m_Weight: 0.854
   m_Data:
     m_ConstrainedObject: {fileID: 6249981304041342972}
     m_SourceObjects:

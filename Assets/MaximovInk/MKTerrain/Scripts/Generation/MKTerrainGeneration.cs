@@ -1,6 +1,9 @@
+
 using System;
+using System.Collections.Generic;
 using Unity.Mathematics;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace MaximovInk.VoxelEngine
 {
@@ -41,7 +44,8 @@ namespace MaximovInk.VoxelEngine
         Humidity,
         Ground,
         BiomeColor,
-        Height
+        Height,
+        ObjectsV1
     }
 
     [System.Serializable]
@@ -55,7 +59,6 @@ namespace MaximovInk.VoxelEngine
     [ExecuteInEditMode]
     public class MKTerrainGeneration : MonoBehaviour
     {
-
         public TexturePreview Preview = new ();
 
         [Range(0.01f, 2f)]
@@ -68,6 +71,8 @@ namespace MaximovInk.VoxelEngine
         public MKNoise Temperature = new();
         public MKNoise Humidity = new();
 
+        public MKNoise ObjectsV1 = new();
+
         public MKNoiseType PreviewType;
 
         public float testMin = 0f;
@@ -75,8 +80,6 @@ namespace MaximovInk.VoxelEngine
 
         public float TempInfluence = 10f;
         public float HumidityInfluence = 5f;
-
-        public MKBiome[] Biomes = Array.Empty<MKBiome>();
 
         [SerializeField]
         private float[] _biomeWeights = Array.Empty<float>();
@@ -92,7 +95,86 @@ namespace MaximovInk.VoxelEngine
             _terrain = GetComponent<VoxelTerrain>();
 
             if (_terrain != null)
-                _terrain.OnChunkLoaded += GenerateData;
+            {
+               // _terrain.OnChunkLoaded += GenerateHeight;
+              //  _terrain.OnMeshGenerated += GeneratePost;
+            }
+
+        }
+
+        List<int3> positionsAdded = new List<int3>();
+
+
+        private void GeneratePost(VoxelChunk chunk)
+        {
+
+            if(chunk.LOD < 8 && chunk.PreviousLOD < chunk.LOD)
+                return;
+
+            chunk.DestroyAllObjects();
+
+            var chunkPos = chunk.Position;
+            var gridOrigin = ChunkSize * chunkPos;
+            positionsAdded.Clear();
+
+
+            for (int i = 0; i < chunk.Mesh.vertexCount; i++)
+            {
+                var v = chunk.Mesh.vertices[i];
+
+                var bIndex = chunk.VertexToBlockIndex[i];
+
+                var pos = VoxelUtility.IndexToPos(bIndex);
+
+                if (positionsAdded.Contains(pos)) continue;
+                positionsAdded.Add(pos);
+
+                var topCheck = new int3(pos.x, pos.y + 2, pos.z);
+
+                bool topIsEmpty;
+                if (topCheck.y >= ChunkSize.y-1)
+                {
+                    var globalPos = VoxelUtility.LocalGridToGlobalGrid(chunk, topCheck);
+                    topIsEmpty = _terrain.GetBlock(globalPos) == 0;
+                }
+                else
+                {
+                    topIsEmpty = chunk.GetBlock(topCheck) == 0;
+                }
+
+                if (topIsEmpty)
+                {
+                    var sampleX = pos.x + gridOrigin.x;
+                    var sampleY = pos.z + gridOrigin.z;
+
+                    var p = ScaleAtPos(new Vector2(sampleX, sampleY));
+                    var d0 = 0f;
+                    var rV = ObjectsV1.EvaluateCellular(p.x, p.y, ref d0);
+
+                    
+                    if (rV > 0.5f && d0 < 0.5f)
+                    {
+                       // Debug.Log("topEmpty");
+
+
+                       var posOffset = new Vector3(
+                           Random.Range(-1,1),0,
+                           Random.Range(-1,1));
+
+                        chunk.AddObject(new VoxelObjectInfo()
+                        {
+                            PrefabID = "tree",
+                            Position = v+ posOffset,
+                            Scale = Vector3.one,
+                            Rotation =Quaternion.identity
+                        });
+                    }
+
+                }
+
+
+
+            }
 
         }
 
@@ -107,12 +189,17 @@ namespace MaximovInk.VoxelEngine
 
         public ObjectSpawnData[] Objects;
 
-        private void GenerateData(VoxelChunk chunk)
+        private MKBiome[] _cachedBiomes;
+
+        private void GenerateHeight(VoxelChunk chunk)
         {
             var chunkPos = chunk.Position;
 
             var gridOrigin = ChunkSize * chunkPos;
             PreGeneration();
+
+            //var isoLevelF = chunk.Terrain.IsoLevel/255f;
+            //var isoLevelFMinus = 1f- isoLevelF;
 
             for (int ix = 0; ix < ChunkSize.x; ix++)
             {
@@ -126,7 +213,8 @@ namespace MaximovInk.VoxelEngine
 
                     CalculateBiomeWeights();
 
-                    var color = GetBiomeColor(sampleX, sampleY, out var t, true);
+                    var info = GetBiomeInfo(sampleX, sampleY, out var t, true);
+
 
                     var height = t;
 
@@ -136,20 +224,68 @@ namespace MaximovInk.VoxelEngine
 
                     if (height <= 0) continue;
 
+                    //bool canSpawnObject = height < ChunkSize.y;
+
+                    var topH = 0f;
+
                     for (int iy = 0; iy < ChunkSize.y && iy < height; iy++)
                     {
                         var pos = new int3(ix, iy, iz);
 
-                        chunk.SetBlock(1, pos);
-                        chunk.SetColor(color, pos);
+                        chunk.SetBlock((ushort)(info.PreferBiomeIndex + 1), pos);
+
+                        chunk.SetColor(info.Color, pos);
 
                         var value = Mathf.Clamp01((height - iy) / (ChunkSize.y));
 
                         chunk.SetValue(pos, (byte)(value * 255f));
+
+                        topH = Mathf.Max(iy, topH);
                     }
+
+                    /*
+                    if (canSpawnObject)
+                    {
+                        var p = ScaleAtPos(new Vector2(sampleX, sampleY));
+                        var d0 = 0f;
+                        var rV = ObjectsV1.EvaluateCellular(p.x, p.y, ref d0);
+
+                        if (rV > 0.5f && d0 < 0.01f)
+                        {
+                            Debug.Log(topH);
+
+                            //chunk.GridToLocal(new Vector3(p.x, p.y, height)
+
+                            //3
+                            //0,098
+                            //0,0902
+
+                            //37.61
+                            //42
+
+
+
+                            //4,39
+
+                            chunk.AddObject(new VoxelObjectInfo()
+                            {
+                                PrefabID = "tree",
+                                Position = chunk.GridToLocal(new Vector3(ix, topH, iz)),
+                                Rotation = Quaternion.identity,
+                                Scale = Vector3.one
+                            });
+                        }
+                    }*/
 
                 }
             }
+
+        }
+
+        private Vector2 ScaleAtPos(Vector2 input)
+        {
+            ScaleAtMovePos(ref input.x, ref input.y);
+            return input;
         }
 
         private void OnValidate()
@@ -209,6 +345,9 @@ namespace MaximovInk.VoxelEngine
                     Temperature.CalculateOffsets();
                     Humidity.CalculateOffsets();
                     break;
+                case MKNoiseType.ObjectsV1:
+                    ObjectsV1.CalculateOffsets();
+                    break;
                 default:
                     throw new ArgumentOutOfRangeException();
             }
@@ -216,7 +355,7 @@ namespace MaximovInk.VoxelEngine
 
         private void CalculateBiomeWeights()
         {
-            var biomeCount = Biomes?.Length ?? 0;
+            var biomeCount = _cachedBiomes?.Length ?? 0;
 
             if (biomeCount == 0) return;
 
@@ -229,7 +368,7 @@ namespace MaximovInk.VoxelEngine
 
             for (int i = 0; i < biomeCount; i++)
             {
-                Vector2 d = new Vector2(Biomes[i].Temperature - _currentTemp, Biomes[i].Humidity - _currentHum);
+                Vector2 d = new Vector2(_cachedBiomes[i].Temperature - _currentTemp, _cachedBiomes[i].Humidity - _currentHum);
                 d.x *= TempInfluence; // temperature has a high influence on biome matching
                 d.y *= HumidityInfluence; // crank up the humidity difference also to make biome borders less fuzzy
                 _biomeWeights[i] = Mathf.Max(0, 1.0f - (d.x * d.x + d.y * d.y) * 0.1f);
@@ -272,14 +411,25 @@ namespace MaximovInk.VoxelEngine
             return c;
         }
 
-        private Color GetBiomeColor(float x, float y, out float hBlended, bool height=false)
+        private struct BiomeInfo
+        {
+            public int PreferBiomeIndex;
+            public bool IsUnderwater;
+            public Color Color;
+        }
+
+        private BiomeInfo GetBiomeInfo(float x, float y, out float hBlended, bool height=false)
         {
             hBlended = 0.0f;
             var bestIndex = 0;
             var bestWeight = 0f;
             var h = 0f;
 
-            if(_biomeWeights.Length == 0)return Color.white;
+            if (_biomeWeights.Length == 0)
+            {
+                return new BiomeInfo() { IsUnderwater = false, PreferBiomeIndex = -1, Color = Color.white };
+
+            }
             bestWeight = _biomeWeights[bestIndex];
 
             for (int i = 1; i < _biomeWeights.Length; i++)
@@ -292,12 +442,14 @@ namespace MaximovInk.VoxelEngine
                 }
             }
 
+
+
             if (height)
-                h = GetNoise(x,y,Biomes[bestIndex].Terrain)* bestWeight;
+                h = GetNoise(x,y, _cachedBiomes[bestIndex].Terrain)* bestWeight;
 
-            hBlended = (height ? h : GetNoise(x, y, Biomes[bestIndex].Terrain) * bestWeight)  * Biomes[bestIndex].Amplitude + Biomes[bestIndex].BaseHeight * bestWeight;
+            hBlended = (height ? h : GetNoise(x, y, _cachedBiomes[bestIndex].Terrain) * bestWeight)  * _cachedBiomes[bestIndex].Amplitude + _cachedBiomes[bestIndex].BaseHeight * bestWeight;
 
-            var color = GetColor(Biomes[bestIndex], h);
+            var color = GetColor(_cachedBiomes[bestIndex], h);
 
             for (int i = 0; i < _biomeWeights.Length; i++)
             {
@@ -306,23 +458,23 @@ namespace MaximovInk.VoxelEngine
                 var weight = _biomeWeights[i];
 
                 if(height)
-                    h = GetNoise(x, y, Biomes[i].Terrain);
+                    h = GetNoise(x, y, _cachedBiomes[i].Terrain);
 
                 var tt = Mathf.Clamp01(weight * HeightBlendHeight);
 
-                hBlended += (height ? h : GetNoise(x, y, Biomes[i].Terrain)) * tt * Biomes[i].Amplitude + Biomes[i].BaseHeight * tt;
+                hBlended += (height ? h : GetNoise(x, y, _cachedBiomes[i].Terrain)) * tt * _cachedBiomes[i].Amplitude + _cachedBiomes[i].BaseHeight * tt;
 
-                var c = GetColor(Biomes[i], h);
+                var c = GetColor(_cachedBiomes[i], h);
 
                 color = Color.Lerp(color, c, weight);
             }
 
-            if(hBlended < WaterLevel)
+            if (hBlended < WaterLevel)
             {
-                return WaterColor;
+                return new BiomeInfo() { IsUnderwater = true, PreferBiomeIndex = bestIndex, Color = WaterColor };
             }
-            
-            return color;
+
+            return new BiomeInfo() { IsUnderwater = false, PreferBiomeIndex = bestIndex, Color = color };
         }
 
         private float GetNoise(float x, float y, MKNoise noise)
@@ -344,6 +496,7 @@ namespace MaximovInk.VoxelEngine
                 MKNoiseType.Temp => Temperature.Evaluate(x, y),
                 MKNoiseType.Humidity => Humidity.Evaluate(x, y),
                 MKNoiseType.Ground => Ground.Evaluate(x, y),
+                MKNoiseType.ObjectsV1 => ObjectsV1.Evaluate(x,y),
                 _ => 0f
             };
 
@@ -367,7 +520,7 @@ namespace MaximovInk.VoxelEngine
             {
                 case MKNoiseType.Result:
 
-                    return GetBiomeColor(x,y,out _, true);
+                    return GetBiomeInfo(x,y,out _, true).Color;
 
                     break;
                 case MKNoiseType.Temp:
@@ -381,7 +534,7 @@ namespace MaximovInk.VoxelEngine
                     break;
                 case MKNoiseType.BiomeColor:
 
-                    return GetBiomeColor(x,y,out _,false);
+                    return GetBiomeInfo(x,y,out _,false).Color;
 
                     break;
                 case MKNoiseType.Height:
@@ -390,9 +543,12 @@ namespace MaximovInk.VoxelEngine
 
                     // var color = GetColor(ix + gridOrigin.x, iz + gridOrigin.z, t);
 
-                    var color = GetBiomeColor(x, y, out var newT, true);
+                    GetBiomeInfo(x, y, out var newT, true);
 
                     return Color.Lerp(Color.black, Color.white, newT);
+
+                case MKNoiseType.ObjectsV1:
+                    return ObjectsV1.GetColor(t);
 
                 default:
                     throw new ArgumentOutOfRangeException();
@@ -403,6 +559,23 @@ namespace MaximovInk.VoxelEngine
 
         private void GeneratePreview()
         {
+            if (_terrain == null)
+            {
+                Debug.LogError("Generation aborted. Terrain is null");
+                return;
+            }
+            if (_terrain.Data == null)
+            {
+                Debug.LogError("Generation aborted. TerrainData is null");
+                return;
+            }
+            _cachedBiomes = _terrain.Data.Biomes;
+            if (_cachedBiomes == null)
+            {
+                Debug.LogError("Generation aborted. TerrainData Biomes is null");
+                return;
+            }
+
             Preview.Validate();
 
             testMin = 1f;

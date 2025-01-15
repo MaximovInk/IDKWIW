@@ -82,6 +82,22 @@ namespace MaximovInk.VoxelEngine
 
         public VoxelTerrainObjectsDatabase ObjectsDatabase => _objectsDatabase;
         [SerializeField] private VoxelTerrainObjectsDatabase _objectsDatabase;
+
+
+        public MKBiome[] Biomes = Array.Empty<MKBiome>();
+
+        public MKBiome GetBiomeFromBlock(int id)
+        {
+            if (Biomes.Length == 0) return null;
+
+            id--;
+
+            if (id >= Biomes.Length || id < 0) return Biomes[0];
+
+            return Biomes[id];
+        }
+
+
     }
 
 }
